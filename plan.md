@@ -31,11 +31,26 @@
 
 ---
 
-## Phase 4: Additional Features and Polish
-- [ ] Add "Add New Stock" modal with form (ticker, company_name, initial stage)
-- [ ] Implement stock creation with validation
-- [ ] Add empty state messaging for columns with no stocks
-- [ ] Create transition history view/modal to display TransitionLog entries for a stock
-- [ ] Add timestamp formatting and last_updated display
-- [ ] Implement responsive design for different screen sizes
-- [ ] Add loading states and error toasts for user feedback
+## Phase 4: Additional Features and Polish ✅
+- [x] Add "Add New Stock" modal with form (ticker, company_name, initial stage)
+- [x] Implement stock creation with validation
+- [x] Add empty state messaging for columns with no stocks
+- [x] Create transition history view/modal to display TransitionLog entries for a stock
+- [x] Add timestamp formatting and last_updated display
+- [x] Implement responsive design for different screen sizes
+- [x] Add loading states and error toasts for user feedback
+- [x] Add stock count badges to column headers
+- [x] Implement delete stock functionality
+- [x] Add visual polish and hover effects
+
+---
+
+## Phase 5: UI Verification and Testing
+- [ ] Test drag-and-drop functionality across all 8 stages
+- [ ] Verify confirmation modal appears with correct stock and stage information
+- [ ] Test "Add New Stock" modal with validation (duplicate tickers, empty fields)
+- [ ] Verify search functionality filters stocks correctly
+- [ ] Test transition history modal displays all stock movements
+- [ ] Verify delete stock functionality with toast notifications
+- [ ] Test responsive layout and horizontal scrolling
+- [ ] Verify empty state messaging appears in columns without stocks
