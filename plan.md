@@ -1,11 +1,11 @@
 # Stock Portfolio Kanban Tracker - Implementation Plan
 
-## Phase 1: Database Models and State Management
-- [ ] Create Stock model (ticker PK, company_name, status, last_updated)
-- [ ] Create TransitionLog model (id PK, ticker FK, previous_stage, new_stage, timestamp, user_comment, updated_by)
-- [ ] Initialize SQLite database with schema and sample data
-- [ ] Create main application state class with stock loading and filtering by status
-- [ ] Implement data access methods for reading stocks and writing transition logs
+## Phase 1: Database Models and State Management ✅
+- [x] Create Stock model (ticker PK, company_name, status, last_updated)
+- [x] Create TransitionLog model (id PK, ticker FK, previous_stage, new_stage, timestamp, user_comment, updated_by)
+- [x] Initialize SQLite database with schema and sample data
+- [x] Create main application state class with stock loading and filtering by status
+- [x] Implement data access methods for reading stocks and writing transition logs
 
 ---
 
