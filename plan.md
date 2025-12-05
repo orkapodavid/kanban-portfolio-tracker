@@ -9,25 +9,25 @@
 
 ---
 
-## Phase 2: Kanban Board UI and Layout
-- [ ] Design header with app title, search functionality, and "Add New Stock" button
-- [ ] Implement 8 Kanban columns (Universe, Prospects, Outreach, Discovery, Live Deal, Execute, Tracker, Ocean)
-- [ ] Create stock card component displaying ticker and company_name
-- [ ] Add horizontal scroll layout for board columns
-- [ ] Style cards with hover states and visual feedback
-- [ ] Implement search/filter functionality to find stocks by ticker
+## Phase 2: Kanban Board UI and Layout ✅
+- [x] Design header with app title, search functionality, and "Add New Stock" button
+- [x] Implement 8 Kanban columns (Universe, Prospects, Outreach, Discovery, Live Deal, Execute, Tracker, Ocean)
+- [x] Create stock card component displaying ticker and company_name
+- [x] Add horizontal scroll layout for board columns
+- [x] Style cards with hover states and visual feedback
+- [x] Implement search/filter functionality to find stocks by ticker
 
 ---
 
-## Phase 3: Drag-and-Drop with Transaction Handling
-- [ ] Install reflex-enterprise for drag-and-drop components
-- [ ] Wrap stock cards with draggable component (rxe.dnd.draggable)
-- [ ] Wrap stage columns with drop target component (rxe.dnd.drop_target)
-- [ ] Create confirmation modal with user input (updated_by field and comment textarea)
-- [ ] Implement drop event handler to capture move and trigger modal
-- [ ] Create backend transaction: update Stock status + insert TransitionLog entry
-- [ ] Add error handling for database operations
-- [ ] Implement optimistic UI updates with rollback on failure
+## Phase 3: Drag-and-Drop with Transaction Handling ✅
+- [x] Install reflex-enterprise for drag-and-drop components
+- [x] Wrap stock cards with draggable component (rxe.dnd.draggable)
+- [x] Wrap stage columns with drop target component (rxe.dnd.drop_target)
+- [x] Create confirmation modal with user input (updated_by field and comment textarea)
+- [x] Implement drop event handler to capture move and trigger modal
+- [x] Create backend transaction: update Stock status + insert TransitionLog entry
+- [x] Add error handling for database operations
+- [x] Implement optimistic UI updates with rollback on failure
 
 ---
 
