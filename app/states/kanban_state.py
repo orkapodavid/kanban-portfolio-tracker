@@ -25,6 +25,71 @@ class KanbanState(rx.State):
     logs: list[TransitionLog] = []
     stages: list[str] = STAGES
     last_error: str = ""
+    search_query: str = ""
+    is_modal_open: bool = False
+    pending_move_ticker: str = ""
+    pending_move_stage: str = ""
+    modal_comment: str = ""
+    modal_user: str = "Analyst A"
+    available_users: list[str] = [
+        "Analyst A",
+        "Analyst B",
+        "Portfolio Manager",
+        "Compliance Officer",
+    ]
+
+    @rx.var
+    def filtered_stocks(self) -> list[Stock]:
+        """
+        Returns stocks matching the search query.
+        """
+        if not self.search_query:
+            return self.stocks
+        query = self.search_query.lower()
+        return [
+            s
+            for s in self.stocks
+            if query in s.ticker.lower() or query in s.company_name.lower()
+        ]
+
+    @rx.event
+    def handle_drop(self, item: dict[str, str], new_stage: str):
+        """
+        Initiates a stock move when a card is dropped. Opens the confirmation modal.
+        """
+        ticker = item.get("ticker")
+        if not ticker:
+            return
+        stock = next((s for s in self.stocks if s.ticker == ticker), None)
+        if stock and stock.status != new_stage:
+            self.pending_move_ticker = ticker
+            self.pending_move_stage = new_stage
+            self.modal_comment = ""
+            self.is_modal_open = True
+
+    @rx.event
+    def confirm_move(self):
+        """
+        Executes the pending move after user confirmation.
+        """
+        if self.pending_move_ticker and self.pending_move_stage:
+            self.move_stock(
+                self.pending_move_ticker,
+                self.pending_move_stage,
+                self.modal_comment or "No comment provided",
+                self.modal_user,
+            )
+        self.cancel_move()
+
+    @rx.event
+    def cancel_move(self):
+        """
+        Cancels the pending move and closes the modal.
+        """
+        self.is_modal_open = False
+        self.pending_move_ticker = ""
+        self.pending_move_stage = ""
+        self.modal_comment = ""
 
     @rx.event
     def load_stocks(self):
