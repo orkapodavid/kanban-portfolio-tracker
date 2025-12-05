@@ -37,6 +37,14 @@ class KanbanState(rx.State):
         "Portfolio Manager",
         "Compliance Officer",
     ]
+    is_add_modal_open: bool = False
+    new_stock_ticker: str = ""
+    new_stock_company: str = ""
+    new_stock_stage: str = "Universe"
+    is_history_open: bool = False
+    history_stock_ticker: str = ""
+    history_logs: list[TransitionLog] = []
+    stock_to_delete: str = ""
 
     @rx.var
     def filtered_stocks(self) -> list[Stock]:
@@ -51,6 +59,17 @@ class KanbanState(rx.State):
             for s in self.stocks
             if query in s.ticker.lower() or query in s.company_name.lower()
         ]
+
+    @rx.var
+    def stocks_by_stage(self) -> dict[str, list[Stock]]:
+        """
+        Returns filtered stocks organized by stage for easier rendering.
+        """
+        result = {stage: [] for stage in self.stages}
+        for stock in self.filtered_stocks:
+            if stock.status in result:
+                result[stock.status].append(stock)
+        return result
 
     @rx.event
     def handle_drop(self, item: dict[str, str], new_stage: str):
@@ -90,6 +109,63 @@ class KanbanState(rx.State):
         self.pending_move_ticker = ""
         self.pending_move_stage = ""
         self.modal_comment = ""
+
+    @rx.event
+    def open_add_modal(self):
+        self.is_add_modal_open = True
+        self.new_stock_ticker = ""
+        self.new_stock_company = ""
+        self.new_stock_stage = "Universe"
+
+    @rx.event
+    def close_add_modal(self):
+        self.is_add_modal_open = False
+
+    @rx.event
+    def submit_new_stock(self):
+        if not self.new_stock_ticker or not self.new_stock_company:
+            yield rx.toast.error("Ticker and Company Name are required.")
+            return
+        if any(
+            (s.ticker.upper() == self.new_stock_ticker.upper() for s in self.stocks)
+        ):
+            yield rx.toast.error(f"Stock {self.new_stock_ticker} already exists.")
+            return
+        new_stock = Stock(
+            ticker=self.new_stock_ticker.upper(),
+            company_name=self.new_stock_company,
+            status=self.new_stock_stage,
+            last_updated=get_utc_now(),
+        )
+        self.stocks.append(new_stock)
+        initial_log = TransitionLog(
+            ticker=new_stock.ticker,
+            previous_stage="VOID",
+            new_stage=self.new_stock_stage,
+            timestamp=get_utc_now(),
+            user_comment="Initial creation",
+            updated_by="System",
+        )
+        self.logs.append(initial_log)
+        yield rx.toast.success(f"Added {new_stock.ticker} to {self.new_stock_stage}")
+        self.close_add_modal()
+
+    @rx.event
+    def view_history(self, ticker: str):
+        self.history_stock_ticker = ticker
+        filtered_logs = [log for log in self.logs if log.ticker == ticker]
+        filtered_logs.sort(key=lambda x: x.timestamp or get_utc_now(), reverse=True)
+        self.history_logs = filtered_logs
+        self.is_history_open = True
+
+    @rx.event
+    def close_history(self):
+        self.is_history_open = False
+
+    @rx.event
+    def delete_stock(self, ticker: str):
+        self.stocks = [s for s in self.stocks if s.ticker != ticker]
+        yield rx.toast.success(f"Deleted stock {ticker}")
 
     @rx.event
     def load_stocks(self):
