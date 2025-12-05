@@ -45,12 +45,12 @@
 
 ---
 
-## Phase 5: UI Verification and Testing
-- [ ] Test drag-and-drop functionality across all 8 stages
-- [ ] Verify confirmation modal appears with correct stock and stage information
-- [ ] Test "Add New Stock" modal with validation (duplicate tickers, empty fields)
-- [ ] Verify search functionality filters stocks correctly
-- [ ] Test transition history modal displays all stock movements
-- [ ] Verify delete stock functionality with toast notifications
-- [ ] Test responsive layout and horizontal scrolling
-- [ ] Verify empty state messaging appears in columns without stocks
+## Phase 5: UI Verification and Testing ✅
+- [x] Test drag-and-drop functionality across all 8 stages
+- [x] Verify confirmation modal appears with correct stock and stage information
+- [x] Test "Add New Stock" modal with validation (duplicate tickers, empty fields)
+- [x] Verify search functionality filters stocks correctly
+- [x] Test transition history modal displays all stock movements
+- [x] Verify delete stock functionality with toast notifications
+- [x] Test responsive layout and horizontal scrolling
+- [x] Verify empty state messaging appears in columns without stocks
