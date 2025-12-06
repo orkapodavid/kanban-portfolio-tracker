@@ -1,6 +1,6 @@
 import reflex as rx
 from typing import Optional
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import logging
 from app.models import Stock, TransitionLog, StageDef, STAGES_DATA, get_utc_now
 
@@ -180,6 +180,8 @@ class KanbanState(rx.State):
             company_name=self.new_stock_company,
             status=self.new_stock_stage,
             last_updated=get_utc_now(),
+            current_stage_entered_at=get_utc_now(),
+            days_in_stage=0,
         )
         self.stocks.append(new_stock)
         initial_log = TransitionLog(
@@ -227,32 +229,35 @@ class KanbanState(rx.State):
             if not self.stocks:
                 logging.info("State empty. Seeding sample data...")
                 sample_data = [
-                    ("AAPL", "Apple Inc.", "Universe"),
-                    ("MSFT", "Microsoft Corp.", "Universe"),
-                    ("GOOGL", "Alphabet Inc.", "Prospects"),
-                    ("AMZN", "Amazon.com Inc.", "Outreach"),
-                    ("TSLA", "Tesla Inc.", "Discovery"),
-                    ("NVDA", "NVIDIA Corp.", "Live Deal"),
-                    ("JPM", "JPMorgan Chase", "Execute"),
-                    ("V", "Visa Inc.", "Tracker"),
-                    ("NFLX", "Netflix Inc.", "Ocean"),
-                    ("PLTR", "Palantir Tech", "Universe"),
-                    ("CRM", "Salesforce", "Prospects"),
-                    ("UBER", "Uber Technologies", "Outreach"),
+                    ("AAPL", "Apple Inc.", "Universe", 2),
+                    ("MSFT", "Microsoft Corp.", "Universe", 45),
+                    ("GOOGL", "Alphabet Inc.", "Prospects", 15),
+                    ("AMZN", "Amazon.com Inc.", "Outreach", 5),
+                    ("TSLA", "Tesla Inc.", "Discovery", 35),
+                    ("NVDA", "NVIDIA Corp.", "Live Deal", 1),
+                    ("JPM", "JPMorgan Chase", "Execute", 60),
+                    ("V", "Visa Inc.", "Tracker", 20),
+                    ("NFLX", "Netflix Inc.", "Ocean", 90),
+                    ("PLTR", "Palantir Tech", "Universe", 0),
+                    ("CRM", "Salesforce", "Prospects", 8),
+                    ("UBER", "Uber Technologies", "Outreach", 3),
                 ]
-                for ticker, name, status in sample_data:
+                for ticker, name, status, days_stale in sample_data:
+                    entered_at = get_utc_now() - timedelta(days=days_stale)
                     stock = Stock(
                         ticker=ticker,
                         company_name=name,
                         status=status,
-                        last_updated=get_utc_now(),
+                        last_updated=entered_at,
+                        current_stage_entered_at=entered_at,
+                        days_in_stage=days_stale,
                     )
                     self.stocks.append(stock)
                     log = TransitionLog(
                         ticker=ticker,
                         previous_stage="VOID",
                         new_stage=status,
-                        timestamp=get_utc_now(),
+                        timestamp=entered_at,
                         user_comment="Initial Seed Data",
                         updated_by="System",
                     )
@@ -286,6 +291,8 @@ class KanbanState(rx.State):
                 current_stage = stock.status
                 stock.status = new_stage
                 stock.last_updated = get_utc_now()
+                stock.current_stage_entered_at = get_utc_now()
+                stock.days_in_stage = 0
                 log = TransitionLog(
                     ticker=ticker,
                     previous_stage=current_stage,

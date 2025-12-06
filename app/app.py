@@ -44,13 +44,39 @@ def draggable_stock_card(stock: Stock) -> rx.Component:
                 class_name="flex justify-between items-start mb-2",
             ),
             rx.el.div(
-                rx.icon("clock", class_name="h-3 w-3 text-gray-400 mr-1"),
+                rx.cond(
+                    stock.days_in_stage < 7,
+                    rx.el.div(
+                        rx.icon("check_check", class_name="h-3 w-3 mr-1"),
+                        rx.el.span("Fresh", class_name="font-bold mr-1"),
+                        rx.el.span(f"({stock.days_in_stage}d)"),
+                        class_name="flex items-center text-[10px] text-green-700 bg-green-50 px-2 py-1 rounded-full border border-green-200 w-fit",
+                    ),
+                    rx.cond(
+                        stock.days_in_stage > 30,
+                        rx.el.div(
+                            rx.icon("badge_alert", class_name="h-3 w-3 mr-1"),
+                            rx.el.span("Stale", class_name="font-bold mr-1"),
+                            rx.el.span(f"({stock.days_in_stage}d)"),
+                            class_name="flex items-center text-[10px] text-red-700 bg-red-50 px-2 py-1 rounded-full border border-red-200 w-fit",
+                        ),
+                        rx.el.div(
+                            rx.icon("hourglass", class_name="h-3 w-3 mr-1"),
+                            rx.el.span(f"{stock.days_in_stage} days in stage"),
+                            class_name="flex items-center text-[10px] text-gray-600 bg-gray-50 px-2 py-1 rounded-full border border-gray-200 w-fit",
+                        ),
+                    ),
+                ),
+                class_name="flex items-center mt-3",
+            ),
+            rx.el.div(
+                rx.icon("clock", class_name="h-3 w-3 text-gray-300 mr-1"),
                 rx.el.span(
                     "Updated ",
                     rx.moment(stock.last_updated, from_now=True),
-                    class_name="text-xs text-gray-400",
+                    class_name="text-[10px] text-gray-400",
                 ),
-                class_name="flex items-center mt-2 border-t border-gray-100 pt-2",
+                class_name="flex items-center mt-2 pt-2 border-t border-gray-50",
             ),
             class_name="bg-white p-3 rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-blue-300 transition-all cursor-grab active:cursor-grabbing select-none group relative",
         ),

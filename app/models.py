@@ -15,6 +15,8 @@ class Stock(rx.Base):
     company_name: str
     status: str
     last_updated: datetime | None = None
+    current_stage_entered_at: datetime | None = None
+    days_in_stage: int = 0
 
 
 class TransitionLog(rx.Base):
