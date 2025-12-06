@@ -133,38 +133,41 @@
 
 ---
 
-## Phase 11: Deal Detail Modal with Edit Capabilities
-- [ ] Add state variables for detail modal (is_detail_modal_open, detail_stock_id, active_detail_tab, edit_ticker_value)
-- [ ] Create open_detail_modal(stock_id) and close_detail_modal() event handlers
-- [ ] Create save_ticker_edit() event handler that calls update_ticker()
-- [ ] Create deal_detail_modal() component with tabbed interface
-- [ ] Implement Overview tab: Display Stock ID (read-only), editable Ticker input field, Rename button, Current Stage, Days in Stage
-- [ ] Implement Activity Log tab: Render TransitionLog data table with columns (Date, From, To, User, Comment, Type)
-- [ ] Add conditional formatting for forced transitions (yellow background + rationale display)
-- [ ] Make stock cards clickable (on_click handler) without interfering with drag functionality
-- [ ] Wire up modal opening to card click events
+## Phase 11: Deal Detail Modal with Edit Capabilities ✅
+- [x] Add state variables for detail modal (is_detail_modal_open, detail_stock_id, active_detail_tab, edit_ticker_value)
+- [x] Create open_detail_modal(stock_id) and close_detail_modal() event handlers
+- [x] Create save_ticker_edit() event handler that calls update_ticker()
+- [x] Create deal_detail_modal() component with tabbed interface
+- [x] Implement Overview tab: Display Stock ID (read-only), editable Ticker input field, Rename button, Current Stage, Days in Stage
+- [x] Implement Activity Log tab: Render TransitionLog data table with columns (Date, From, To, User, Comment, Type)
+- [x] Add conditional formatting for forced transitions (yellow background + rationale display)
+- [x] Make stock cards clickable (on_click handler) without interfering with drag functionality
+- [x] Wire up modal opening to card click events
 
 ---
 
-## Phase 12: Ocean Column Archive View
-- [ ] Add is_ocean_modal_open state variable for archive view
-- [ ] Create open_ocean_modal() and close_ocean_modal() event handlers
-- [ ] Modify droppable_stage_column() to detect if stage == "Ocean"
-- [ ] For Ocean column: Render single summary card showing "🌊 [Count] Deals in Ocean"
-- [ ] Make Ocean summary card clickable to open archive modal
-- [ ] Create ocean_archive_modal() component displaying list of all Ocean stocks
-- [ ] Allow click-through from archive list to individual deal detail modals
-- [ ] Ensure Ocean column can still accept drops (remains a drop target)
+## Phase 12: Ocean Column Archive View ✅
+- [x] Add is_ocean_modal_open state variable for archive view
+- [x] Create open_ocean_modal() and close_ocean_modal() event handlers
+- [x] Modify droppable_stage_column() to detect if stage == "Ocean"
+- [x] For Ocean column: Render single summary card showing "🌊 [Count] Deals in Ocean"
+- [x] Make Ocean summary card clickable to open archive modal
+- [x] Create ocean_archive_modal() component displaying list of all Ocean stocks
+- [x] Allow click-through from archive list to individual deal detail modals
+- [x] Ensure Ocean column can still accept drops (remains a drop target)
 
 ---
 
-## Phase 13: UI Verification - Deal Detail Modal
+## Phase 13: UI Verification - Deal Detail Modal and Ocean Archive
 - [ ] Test clicking stock cards opens detail modal correctly
-- [ ] Verify Overview tab displays all stock information accurately
-- [ ] Test ticker renaming functionality (change ticker, verify update, check history preserved)
+- [ ] Verify Overview tab displays all stock information accurately (ID, Ticker input, Current Stage, Days in Stage)
+- [ ] Test ticker renaming functionality (change ticker, click Rename button, verify update works)
 - [ ] Verify Activity Log tab displays all transitions for the stock
 - [ ] Test forced transition highlighting (yellow background) in activity log
 - [ ] Verify modal closes properly and doesn't interfere with drag-and-drop
 - [ ] Test Ocean column shows summary card instead of individual cards
-- [ ] Verify Ocean summary card click opens archive modal
+- [ ] Verify Ocean summary card displays correct count
+- [ ] Test Ocean summary card click opens archive modal
+- [ ] Verify archive modal lists all Ocean stocks
+- [ ] Test click-through from archive to detail modal
 - [ ] Test search functionality still works with ticker and company_name filtering
