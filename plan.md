@@ -88,9 +88,9 @@
 
 ---
 
-## Phase 8: UI Verification - Staleness Indicators
-- [ ] Verify staleness badges display correctly on all cards with proper icons
-- [ ] Test conditional color formatting (Green Fresh badge, Red Stale badge, Gray default)
-- [ ] Verify "Show Stale Only" filter button works and displays only stale stocks
-- [ ] Test that days_in_stage updates correctly when stocks are moved
-- [ ] Verify empty state messaging when stale filter shows no results
+## Phase 8: UI Verification - Staleness Indicators ✅
+- [x] Verify staleness badges display correctly on all cards with proper icons
+- [x] Test conditional color formatting (Green Fresh badge, Red Stale badge, Gray default)
+- [x] Verify "Show Stale Only" filter button works and displays only stale stocks
+- [x] Test that days_in_stage updates correctly when stocks are moved
+- [x] Verify empty state messaging when stale filter shows no results
