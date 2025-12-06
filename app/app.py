@@ -30,13 +30,13 @@ def draggable_stock_card(stock: Stock) -> rx.Component:
                     rx.menu.content(
                         rx.menu.item(
                             "View History",
-                            on_click=lambda: KanbanState.view_history(stock.ticker),
+                            on_click=lambda: KanbanState.view_history(stock.id),
                             class_name="cursor-pointer",
                         ),
                         rx.menu.separator(),
                         rx.menu.item(
                             "Delete Stock",
-                            on_click=lambda: KanbanState.delete_stock(stock.ticker),
+                            on_click=lambda: KanbanState.delete_stock(stock.id),
                             class_name="text-red-600 cursor-pointer hover:bg-red-50",
                         ),
                     ),
@@ -93,7 +93,8 @@ def draggable_stock_card(stock: Stock) -> rx.Component:
             ),
         ),
         type="stock",
-        item={"ticker": stock.ticker},
+        item={"stock_id": stock.id, "ticker": stock.ticker},
+        key=stock.id,
     )
 
 
@@ -124,9 +125,7 @@ def droppable_stage_column(stage: StageDef) -> rx.Component:
                     stocks_in_stage.length() > 0,
                     rx.foreach(
                         stocks_in_stage,
-                        lambda stock: draggable_stock_card(
-                            key=stock.ticker, stock=stock
-                        ),
+                        lambda stock: draggable_stock_card(key=stock.id, stock=stock),
                     ),
                     rx.el.div(
                         rx.el.span(

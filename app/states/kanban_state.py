@@ -17,10 +17,13 @@ class KanbanState(rx.State):
     search_query: str = ""
     is_modal_open: bool = False
     pending_move_ticker: str = ""
+    pending_move_stock_id: int = -1
     pending_move_stage: str = ""
     transition_warning: str = ""
     modal_comment: str = ""
     modal_user: str = "Analyst A"
+    next_stock_id: int = 1
+    next_log_id: int = 1
     available_users: list[str] = [
         "Analyst A",
         "Analyst B",
@@ -124,14 +127,19 @@ class KanbanState(rx.State):
         return (False, True, "Unknown transition pattern.")
 
     @rx.event
-    def handle_drop(self, item: dict[str, str], new_stage: str):
+    def handle_drop(self, item: dict[str, str | int], new_stage: str):
         """
         Initiates a stock move when a card is dropped. Opens the confirmation modal or force modal.
         """
-        ticker = item.get("ticker")
-        if not ticker:
+        stock_id = item.get("stock_id")
+        if not stock_id:
             return
-        stock = next((s for s in self.stocks if s.ticker == ticker), None)
+        try:
+            stock_id = int(stock_id)
+        except (ValueError, TypeError) as e:
+            logging.exception(f"Error converting stock_id to int: {e}")
+            return
+        stock = next((s for s in self.stocks if s.id == stock_id), None)
         if not stock:
             return
         is_valid, is_forceable, message = self.validate_transition(
@@ -140,7 +148,8 @@ class KanbanState(rx.State):
         if not is_valid and (not is_forceable):
             yield rx.toast.error(f"Move not allowed: {message}")
             return
-        self.pending_move_ticker = ticker
+        self.pending_move_stock_id = stock_id
+        self.pending_move_ticker = stock.ticker
         self.pending_move_stage = new_stage
         self.transition_warning = message
         if not is_valid and is_forceable:
@@ -155,12 +164,12 @@ class KanbanState(rx.State):
         """
         Executes the pending move after user confirmation.
         """
-        if self.pending_move_ticker and self.pending_move_stage:
+        if self.pending_move_stock_id != -1 and self.pending_move_stage:
             final_comment = self.modal_comment or "No comment provided"
             if self.transition_warning:
                 final_comment = f"[{self.transition_warning}] {final_comment}"
             self.move_stock(
-                self.pending_move_ticker,
+                self.pending_move_stock_id,
                 self.pending_move_stage,
                 final_comment,
                 self.modal_user,
@@ -176,9 +185,9 @@ class KanbanState(rx.State):
         if not self.force_rationale:
             yield rx.toast.error("Rationale is required for forced transitions.")
             return
-        if self.pending_move_ticker and self.pending_move_stage:
+        if self.pending_move_stock_id != -1 and self.pending_move_stage:
             self.move_stock(
-                self.pending_move_ticker,
+                self.pending_move_stock_id,
                 self.pending_move_stage,
                 self.force_rationale,
                 self.modal_user,
@@ -193,6 +202,7 @@ class KanbanState(rx.State):
         Cancels the pending move and closes the modal.
         """
         self.is_modal_open = False
+        self.pending_move_stock_id = -1
         self.pending_move_ticker = ""
         self.pending_move_stage = ""
         self.modal_comment = ""
@@ -201,6 +211,7 @@ class KanbanState(rx.State):
     @rx.event
     def close_force_modal(self):
         self.is_force_modal_open = False
+        self.pending_move_stock_id = -1
         self.pending_move_ticker = ""
         self.pending_move_stage = ""
         self.force_rationale = ""
@@ -227,7 +238,10 @@ class KanbanState(rx.State):
         ):
             yield rx.toast.error(f"Stock {self.new_stock_ticker} already exists.")
             return
+        new_id = self.next_stock_id
+        self.next_stock_id += 1
         new_stock = Stock(
+            id=new_id,
             ticker=self.new_stock_ticker.upper(),
             company_name=self.new_stock_company,
             status=self.new_stock_stage,
@@ -236,7 +250,11 @@ class KanbanState(rx.State):
             days_in_stage=0,
         )
         self.stocks.append(new_stock)
+        new_log_id = self.next_log_id
+        self.next_log_id += 1
         initial_log = TransitionLog(
+            id=new_log_id,
+            stock_id=new_id,
             ticker=new_stock.ticker,
             previous_stage="VOID",
             new_stage=self.new_stock_stage,
@@ -249,9 +267,12 @@ class KanbanState(rx.State):
         self.close_add_modal()
 
     @rx.event
-    def view_history(self, ticker: str):
-        self.history_stock_ticker = ticker
-        filtered_logs = [log for log in self.logs if log.ticker == ticker]
+    def view_history(self, stock_id: int):
+        stock = next((s for s in self.stocks if s.id == stock_id), None)
+        if not stock:
+            return
+        self.history_stock_ticker = stock.ticker
+        filtered_logs = [log for log in self.logs if log.stock_id == stock_id]
         filtered_logs.sort(key=lambda x: x.timestamp or get_utc_now(), reverse=True)
         self.history_logs = filtered_logs
         self.is_history_open = True
@@ -261,9 +282,30 @@ class KanbanState(rx.State):
         self.is_history_open = False
 
     @rx.event
-    def delete_stock(self, ticker: str):
-        self.stocks = [s for s in self.stocks if s.ticker != ticker]
-        yield rx.toast.success(f"Deleted stock {ticker}")
+    def delete_stock(self, stock_id: int):
+        stock = next((s for s in self.stocks if s.id == stock_id), None)
+        if stock:
+            self.stocks = [s for s in self.stocks if s.id != stock_id]
+            yield rx.toast.success(f"Deleted stock {stock.ticker}")
+
+    @rx.event
+    def update_ticker(self, stock_id: int, new_ticker: str):
+        """Updates a stock's ticker symbol."""
+        new_ticker = new_ticker.upper().strip()
+        if not new_ticker:
+            return
+        if any((s.ticker == new_ticker and s.id != stock_id for s in self.stocks)):
+            yield rx.toast.error(f"Ticker {new_ticker} already exists.")
+            return
+        stock = next((s for s in self.stocks if s.id == stock_id), None)
+        if stock:
+            old_ticker = stock.ticker
+            stock.ticker = new_ticker
+            for log in self.logs:
+                if log.stock_id == stock_id:
+                    log.ticker = new_ticker
+            yield rx.toast.success(f"Renamed {old_ticker} to {new_ticker}")
+            self.stocks = list(self.stocks)
 
     @rx.event
     def load_stocks(self):
@@ -314,7 +356,12 @@ class KanbanState(rx.State):
                 ]
                 for ticker, name, status, days_stale in sample_data:
                     entered_at = get_utc_now() - timedelta(days=days_stale)
+                    s_id = self.next_stock_id
+                    self.next_stock_id += 1
+                    l_id = self.next_log_id
+                    self.next_log_id += 1
                     stock = Stock(
+                        id=s_id,
                         ticker=ticker,
                         company_name=name,
                         status=status,
@@ -324,6 +371,8 @@ class KanbanState(rx.State):
                     )
                     self.stocks.append(stock)
                     log = TransitionLog(
+                        id=l_id,
+                        stock_id=s_id,
                         ticker=ticker,
                         previous_stage="VOID",
                         new_stage=status,
@@ -333,6 +382,15 @@ class KanbanState(rx.State):
                         days_in_previous_stage=0,
                     )
                     self.logs.append(log)
+            else:
+                migrated = False
+                for stock in self.stocks:
+                    if stock.id == 0:
+                        stock.id = self.next_stock_id
+                        self.next_stock_id += 1
+                        migrated = True
+                if migrated:
+                    self.stocks = list(self.stocks)
         except Exception as e:
             logging.exception(f"Error initializing sample data: {e}")
             self.last_error = f"Initialization Error: {str(e)}"
@@ -340,7 +398,7 @@ class KanbanState(rx.State):
     @rx.event
     def move_stock(
         self,
-        ticker: str,
+        stock_id: int,
         new_stage: str,
         comment: str = "Moved via UI",
         user: str = "Admin",
@@ -357,7 +415,7 @@ class KanbanState(rx.State):
             return
         found_stock = False
         for stock in self.stocks:
-            if stock.ticker == ticker:
+            if stock.id == stock_id:
                 found_stock = True
                 if stock.status == new_stage:
                     return
@@ -368,8 +426,12 @@ class KanbanState(rx.State):
                 stock.current_stage_entered_at = get_utc_now()
                 stock.days_in_stage = 0
                 stock.is_forced = force_override
+                l_id = self.next_log_id
+                self.next_log_id += 1
                 log = TransitionLog(
-                    ticker=ticker,
+                    id=l_id,
+                    stock_id=stock.id,
+                    ticker=stock.ticker,
                     previous_stage=current_stage,
                     new_stage=new_stage,
                     timestamp=get_utc_now(),
@@ -381,13 +443,13 @@ class KanbanState(rx.State):
                 )
                 self.logs.append(log)
                 if force_override:
-                    yield rx.toast.warning(f"Forced move: {ticker} → {new_stage}")
+                    yield rx.toast.warning(f"Forced move: {stock.ticker} → {new_stage}")
                 else:
-                    yield rx.toast.success(f"Moved {ticker} to {new_stage}")
+                    yield rx.toast.success(f"Moved {stock.ticker} to {new_stage}")
                 break
         self.stocks = list(self.stocks)
         if not found_stock:
-            self.last_error = f"Stock {ticker} not found."
+            self.last_error = f"Stock ID {stock_id} not found."
             return
         self.last_error = ""
 

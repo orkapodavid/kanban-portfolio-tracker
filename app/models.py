@@ -11,6 +11,7 @@ class Stock(rx.Base):
     Represents a stock in the Kanban portfolio tracker.
     """
 
+    id: int = 0
     ticker: str
     company_name: str
     status: str
@@ -25,6 +26,8 @@ class TransitionLog(rx.Base):
     Logs the history of stock movements between stages.
     """
 
+    id: int = 0
+    stock_id: int = 0
     ticker: str
     previous_stage: str
     new_stage: str
