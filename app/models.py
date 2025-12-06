@@ -30,6 +30,7 @@ class TransitionLog(rx.Base):
     timestamp: datetime | None = None
     user_comment: str = ""
     updated_by: str = "System"
+    days_in_previous_stage: int = 0
 
 
 class StageDef(rx.Base):

@@ -256,6 +256,20 @@ def header() -> rx.Component:
                     class_name="relative",
                 ),
                 rx.el.button(
+                    rx.cond(
+                        KanbanState.show_stale_only,
+                        rx.icon("filter_x", class_name="h-4 w-4 mr-2"),
+                        rx.icon("filter", class_name="h-4 w-4 mr-2"),
+                    ),
+                    rx.cond(KanbanState.show_stale_only, "Show All", "Show Stale Only"),
+                    on_click=KanbanState.toggle_stale_filter,
+                    class_name=rx.cond(
+                        KanbanState.show_stale_only,
+                        "flex items-center px-4 py-2 bg-red-100 text-red-700 border border-red-200 text-sm font-medium rounded-lg hover:bg-red-200 transition-colors",
+                        "flex items-center px-4 py-2 bg-white text-gray-700 border border-gray-300 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors",
+                    ),
+                ),
+                rx.el.button(
                     rx.icon("plus", class_name="h-4 w-4 mr-2"),
                     "Add New Stock",
                     on_click=KanbanState.open_add_modal,
@@ -371,7 +385,14 @@ def history_modal() -> rx.Component:
                                             log.new_stage,
                                             class_name="font-medium text-blue-600 ml-2",
                                         ),
-                                        class_name="text-sm",
+                                        rx.cond(
+                                            log.previous_stage != "VOID",
+                                            rx.el.span(
+                                                f"({log.days_in_previous_stage} days in prev. stage)",
+                                                class_name="text-xs text-gray-400 ml-2",
+                                            ),
+                                        ),
+                                        class_name="text-sm flex items-center",
                                     ),
                                     rx.el.p(
                                         log.user_comment,

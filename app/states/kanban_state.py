@@ -35,6 +35,7 @@ class KanbanState(rx.State):
     history_stock_ticker: str = ""
     history_logs: list[TransitionLog] = []
     stock_to_delete: str = ""
+    show_stale_only: bool = False
 
     @rx.var
     def stages(self) -> list[str]:
@@ -44,16 +45,23 @@ class KanbanState(rx.State):
     @rx.var
     def filtered_stocks(self) -> list[Stock]:
         """
-        Returns stocks matching the search query.
+        Returns stocks matching the search query and filters.
         """
-        if not self.search_query:
-            return self.stocks
-        query = self.search_query.lower()
-        return [
-            s
-            for s in self.stocks
-            if query in s.ticker.lower() or query in s.company_name.lower()
-        ]
+        stocks = self.stocks
+        if self.search_query:
+            query = self.search_query.lower()
+            stocks = [
+                s
+                for s in stocks
+                if query in s.ticker.lower() or query in s.company_name.lower()
+            ]
+        if self.show_stale_only:
+            stocks = [s for s in stocks if s.days_in_stage > 30]
+        return stocks
+
+    @rx.event
+    def toggle_stale_filter(self):
+        self.show_stale_only = not self.show_stale_only
 
     @rx.var
     def stocks_by_stage(self) -> dict[str, list[Stock]]:
@@ -278,6 +286,7 @@ class KanbanState(rx.State):
                         timestamp=entered_at,
                         user_comment="Initial Seed Data",
                         updated_by="System",
+                        days_in_previous_stage=0,
                     )
                     self.logs.append(log)
         except Exception as e:
@@ -307,6 +316,7 @@ class KanbanState(rx.State):
                 if stock.status == new_stage:
                     return
                 current_stage = stock.status
+                duration = stock.days_in_stage
                 stock.status = new_stage
                 stock.last_updated = get_utc_now()
                 stock.current_stage_entered_at = get_utc_now()
@@ -318,6 +328,7 @@ class KanbanState(rx.State):
                     timestamp=get_utc_now(),
                     user_comment=comment,
                     updated_by=user,
+                    days_in_previous_stage=duration,
                 )
                 self.logs.append(log)
                 break
