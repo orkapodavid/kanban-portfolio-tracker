@@ -218,7 +218,25 @@ class KanbanState(rx.State):
         """
         Load all stocks from the database.
         """
-        pass
+        self.refresh_stock_ages()
+
+    def _calculate_days_in_stage(self, stock: Stock) -> Stock:
+        """
+        Helper to update the days_in_stage based on current time.
+        """
+        if stock.current_stage_entered_at is None:
+            stock.current_stage_entered_at = get_utc_now()
+        delta = get_utc_now() - stock.current_stage_entered_at
+        stock.days_in_stage = max(0, delta.days)
+        return stock
+
+    @rx.event
+    def refresh_stock_ages(self):
+        """
+        Recalculates days_in_stage for all stocks to ensure staleness is accurate.
+        Acts as a migration for records with missing timestamps.
+        """
+        self.stocks = [self._calculate_days_in_stage(s) for s in self.stocks]
 
     @rx.event
     def initialize_sample_data(self):
@@ -315,3 +333,4 @@ class KanbanState(rx.State):
         """
         self.initialize_sample_data()
         self.load_stocks()
+        self.refresh_stock_ages()
