@@ -30,7 +30,9 @@ def draggable_stock_card(stock: Stock) -> rx.Component:
                     rx.menu.content(
                         rx.menu.item(
                             "View History",
-                            on_click=lambda: KanbanState.view_history(stock.id),
+                            on_click=lambda: KanbanState.open_detail_modal(
+                                stock.id, "activity"
+                            ),
                             class_name="cursor-pointer",
                         ),
                         rx.menu.separator(),
@@ -41,7 +43,7 @@ def draggable_stock_card(stock: Stock) -> rx.Component:
                         ),
                     ),
                 ),
-                class_name="flex justify-between items-start mb-2",
+                class_name="flex justify-between items-start mb-2 relative z-10",
             ),
             rx.el.div(
                 class_name="absolute inset-0 z-0",

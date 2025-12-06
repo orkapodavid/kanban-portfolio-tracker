@@ -253,12 +253,12 @@ class KanbanState(rx.State):
         self.is_add_modal_open = False
 
     @rx.event
-    def open_detail_modal(self, stock_id: int):
+    def open_detail_modal(self, stock_id: int, tab: str = "overview"):
         self.detail_stock_id = stock_id
         stock = next((s for s in self.stocks if s.id == stock_id), None)
         if stock:
             self.edit_ticker_value = stock.ticker
-            self.active_detail_tab = "overview"
+            self.active_detail_tab = tab
             self.is_detail_modal_open = True
 
     @rx.event
