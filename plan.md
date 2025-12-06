@@ -86,9 +86,9 @@
 
 ---
 
-## Phase 8: UI Verification - Staleness Indicators
-- [ ] Verify staleness badges display correctly on all cards
-- [ ] Test conditional color formatting (Green/Red) based on days_in_stage
-- [ ] Verify days_in_stage updates correctly when stocks are moved
-- [ ] Test that new stocks show fresh indicators
-- [ ] Verify staleness persists across page reloads
+## Phase 8: UI Verification - Staleness Indicators ✅
+- [x] Verify staleness badges display correctly on all cards
+- [x] Test conditional color formatting (Green/Red) based on days_in_stage
+- [x] Verify days_in_stage updates correctly when stocks are moved
+- [x] Test that new stocks show fresh indicators
+- [x] Verify staleness persists across page reloads
