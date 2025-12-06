@@ -8,6 +8,7 @@ from app.models import Stock, StageDef
 def draggable_stock_card(stock: Stock) -> rx.Component:
     """
     Renders a draggable stock card with actions and timestamps.
+    Includes clickable overlay (z-20) for details modal and context menu (z-30).
     """
     return rxe.dnd.draggable(
         rx.el.div(
@@ -119,7 +120,8 @@ def draggable_stock_card(stock: Stock) -> rx.Component:
 @rx.memo
 def droppable_stage_column(stage: StageDef) -> rx.Component:
     """
-    Renders a droppable column for a specific stage with counts and empty states.
+    Renders a droppable column for a specific stage.
+    Includes special handling for 'Ocean' stage (summary view) vs standard list.
     """
     drop_params = rxe.dnd.DropTarget.collected_params
     stocks_in_stage = KanbanState.stocks_by_stage[stage.name]
@@ -457,7 +459,8 @@ def add_stock_modal() -> rx.Component:
 
 def deal_detail_modal() -> rx.Component:
     """
-    Modal for viewing and editing deal details (Phase 11).
+    Modal for viewing and editing deal details.
+    Includes Overview tab (edit ticker) and Activity Log tab (history table).
     """
     return rx.dialog.root(
         rx.dialog.content(
@@ -674,7 +677,8 @@ def deal_detail_modal() -> rx.Component:
 
 def ocean_archive_modal() -> rx.Component:
     """
-    Modal for viewing the Ocean archive (Phase 12).
+    Modal for viewing the Ocean archive list.
+    Triggered by clicking the Ocean summary card.
     """
     return rx.dialog.root(
         rx.dialog.content(
