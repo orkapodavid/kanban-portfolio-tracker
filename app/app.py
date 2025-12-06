@@ -133,7 +133,7 @@ def droppable_stage_column(stage: StageDef) -> rx.Component:
                                 "🌊", class_name="text-4xl mb-2 block text-center"
                             ),
                             rx.el.span(
-                                f"{stocks_in_stage.length()} Deals Archived",
+                                f"{stocks_in_stage.length()} Deals in Ocean",
                                 class_name="font-bold text-slate-700 block text-center",
                             ),
                             rx.el.span(
@@ -532,19 +532,27 @@ def deal_detail_modal() -> rx.Component:
                                 rx.el.tr(
                                     rx.el.th(
                                         "Date",
-                                        class_name="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-2",
+                                        class_name="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-2 px-2",
                                     ),
                                     rx.el.th(
-                                        "Transition",
-                                        class_name="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-2",
+                                        "From",
+                                        class_name="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-2 px-2",
+                                    ),
+                                    rx.el.th(
+                                        "To",
+                                        class_name="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-2 px-2",
                                     ),
                                     rx.el.th(
                                         "User",
-                                        class_name="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-2",
+                                        class_name="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-2 px-2",
                                     ),
                                     rx.el.th(
                                         "Comment",
-                                        class_name="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-2",
+                                        class_name="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-2 px-2",
+                                    ),
+                                    rx.el.th(
+                                        "Type",
+                                        class_name="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-2 px-2",
                                     ),
                                 )
                             ),
@@ -556,28 +564,25 @@ def deal_detail_modal() -> rx.Component:
                                             rx.moment(
                                                 log.timestamp, format="MMM D, HH:mm"
                                             ),
-                                            class_name="text-xs text-gray-600 py-3 border-b border-gray-100",
+                                            class_name="text-xs text-gray-600 py-3 border-b border-gray-100 px-2",
                                         ),
                                         rx.el.td(
-                                            rx.el.div(
-                                                rx.el.span(
-                                                    log.previous_stage,
-                                                    class_name="text-gray-400 line-through text-xs mr-1",
-                                                ),
-                                                rx.icon(
-                                                    "arrow-right",
-                                                    class_name="h-3 w-3 text-gray-300 mx-1 inline",
-                                                ),
-                                                rx.el.span(
-                                                    log.new_stage,
-                                                    class_name="font-medium text-blue-600 text-xs",
-                                                ),
+                                            rx.el.span(
+                                                log.previous_stage,
+                                                class_name="text-gray-500 text-xs",
                                             ),
-                                            class_name="py-3 border-b border-gray-100",
+                                            class_name="py-3 border-b border-gray-100 px-2",
+                                        ),
+                                        rx.el.td(
+                                            rx.el.span(
+                                                log.new_stage,
+                                                class_name="font-medium text-blue-600 text-xs",
+                                            ),
+                                            class_name="py-3 border-b border-gray-100 px-2",
                                         ),
                                         rx.el.td(
                                             log.updated_by,
-                                            class_name="text-xs text-gray-600 py-3 border-b border-gray-100",
+                                            class_name="text-xs text-gray-600 py-3 border-b border-gray-100 px-2",
                                         ),
                                         rx.el.td(
                                             rx.el.div(
@@ -589,7 +594,7 @@ def deal_detail_modal() -> rx.Component:
                                                     log.is_forced_transition,
                                                     rx.el.div(
                                                         rx.el.span(
-                                                            "RATIONALE: ",
+                                                            "REASON: ",
                                                             class_name="font-bold text-[10px]",
                                                         ),
                                                         log.forced_rationale,
@@ -597,7 +602,21 @@ def deal_detail_modal() -> rx.Component:
                                                     ),
                                                 ),
                                             ),
-                                            class_name="py-3 border-b border-gray-100 max-w-[200px]",
+                                            class_name="py-3 border-b border-gray-100 max-w-[200px] px-2",
+                                        ),
+                                        rx.el.td(
+                                            rx.cond(
+                                                log.is_forced_transition,
+                                                rx.el.span(
+                                                    "FORCED",
+                                                    class_name="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700",
+                                                ),
+                                                rx.el.span(
+                                                    "Standard",
+                                                    class_name="px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-500",
+                                                ),
+                                            ),
+                                            class_name="py-3 border-b border-gray-100 px-2",
                                         ),
                                         class_name=rx.cond(
                                             log.is_forced_transition,
