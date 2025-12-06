@@ -276,7 +276,9 @@ class KanbanState(rx.State):
 
     @rx.event
     def save_ticker_edit(self):
-        return KanbanState.update_ticker(self.detail_stock_id, self.edit_ticker_value)
+        yield from KanbanState.update_ticker(
+            self.detail_stock_id, self.edit_ticker_value
+        )
 
     @rx.event
     def open_ocean_modal(self):
