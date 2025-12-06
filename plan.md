@@ -51,7 +51,7 @@
 - [x] Create validate_transition() function with business rules
 - [x] Implement forward progress validation (linear stage movement)
 - [x] Implement Ocean rule (can move to Ocean from ANY stage)
-- [x] Implement restoration rule (Ocean → Prospects only)
+- [x] Implementation restoration rule (Ocean → Prospects only)
 - [x] Add skip validation (warn if skipping >2 stages, but allow it)
 - [x] Enhance move_stock() to use validation logic
 - [x] Display validation warnings in confirmation modal UI
@@ -74,15 +74,15 @@
 
 ---
 
-## Phase 7: Deal Velocity & Staleness Tracking
-- [ ] Update Stock model to add `current_stage_entered_at` DateTime field
-- [ ] Add computed property `days_in_stage` that calculates (now - current_stage_entered_at)
-- [ ] Update move_stock() to set `current_stage_entered_at` when stage changes
-- [ ] Update submit_new_stock() to initialize `current_stage_entered_at` for new records
-- [ ] Initialize `current_stage_entered_at` for existing sample data in initialize_sample_data()
-- [ ] Update stock card UI to display staleness indicator
-- [ ] Implement conditional badge formatting: Green (<7 days), Default (7-30 days), Red (>30 days)
-- [ ] Add visual "Days in Stage" badge to each stock card
+## Phase 7: Deal Velocity & Staleness Tracking ✅
+- [x] Update Stock model to add `current_stage_entered_at` DateTime field
+- [x] Add computed property `days_in_stage` that calculates (now - current_stage_entered_at)
+- [x] Update move_stock() to set `current_stage_entered_at` when stage changes
+- [x] Update submit_new_stock() to initialize `current_stage_entered_at` for new records
+- [x] Initialize `current_stage_entered_at` for existing sample data in initialize_sample_data()
+- [x] Update stock card UI to display staleness indicator
+- [x] Implement conditional badge formatting: Green (<7 days), Default (7-30 days), Red (>30 days)
+- [x] Add visual "Days in Stage" badge to each stock card
 
 ---
 
