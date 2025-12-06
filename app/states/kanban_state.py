@@ -41,6 +41,30 @@ class KanbanState(rx.State):
     show_stale_only: bool = False
     is_force_modal_open: bool = False
     force_rationale: str = ""
+    is_detail_modal_open: bool = False
+    detail_stock_id: int = -1
+    active_detail_tab: str = "overview"
+    edit_ticker_value: str = ""
+    is_ocean_modal_open: bool = False
+
+    @rx.var
+    def current_detail_stock(self) -> Stock:
+        """Returns the stock currently being viewed in the detail modal."""
+        return next(
+            (s for s in self.stocks if s.id == self.detail_stock_id),
+            Stock(id=-1, ticker="", company_name="", status=""),
+        )
+
+    @rx.var
+    def current_detail_logs(self) -> list[TransitionLog]:
+        """Returns history logs for the detailed stock."""
+        logs = [log for log in self.logs if log.stock_id == self.detail_stock_id]
+        return sorted(logs, key=lambda x: x.timestamp or get_utc_now(), reverse=True)
+
+    @rx.var
+    def ocean_stocks(self) -> list[Stock]:
+        """Returns all stocks in the Ocean stage."""
+        return [s for s in self.stocks if s.status == "Ocean"]
 
     @rx.var
     def stages(self) -> list[str]:
@@ -227,6 +251,40 @@ class KanbanState(rx.State):
     @rx.event
     def close_add_modal(self):
         self.is_add_modal_open = False
+
+    @rx.event
+    def open_detail_modal(self, stock_id: int):
+        self.detail_stock_id = stock_id
+        stock = next((s for s in self.stocks if s.id == stock_id), None)
+        if stock:
+            self.edit_ticker_value = stock.ticker
+            self.active_detail_tab = "overview"
+            self.is_detail_modal_open = True
+
+    @rx.event
+    def close_detail_modal(self):
+        self.is_detail_modal_open = False
+        self.detail_stock_id = -1
+
+    @rx.event
+    def set_active_detail_tab(self, value: str):
+        self.active_detail_tab = value
+
+    @rx.event
+    def set_edit_ticker_value(self, value: str):
+        self.edit_ticker_value = value
+
+    @rx.event
+    def save_ticker_edit(self):
+        yield KanbanState.update_ticker(self.detail_stock_id, self.edit_ticker_value)
+
+    @rx.event
+    def open_ocean_modal(self):
+        self.is_ocean_modal_open = True
+
+    @rx.event
+    def close_ocean_modal(self):
+        self.is_ocean_modal_open = False
 
     @rx.event
     def submit_new_stock(self):

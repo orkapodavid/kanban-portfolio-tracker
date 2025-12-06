@@ -44,6 +44,10 @@ def draggable_stock_card(stock: Stock) -> rx.Component:
                 class_name="flex justify-between items-start mb-2",
             ),
             rx.el.div(
+                class_name="absolute inset-0 z-0",
+                on_click=lambda: KanbanState.open_detail_modal(stock.id),
+            ),
+            rx.el.div(
                 rx.cond(
                     stock.days_in_stage < 7,
                     rx.el.div(
@@ -122,20 +126,43 @@ def droppable_stage_column(stage: StageDef) -> rx.Component:
             ),
             rx.el.div(
                 rx.cond(
-                    stocks_in_stage.length() > 0,
-                    rx.foreach(
-                        stocks_in_stage,
-                        lambda stock: draggable_stock_card(key=stock.id, stock=stock),
-                    ),
+                    stage.name == "Ocean",
                     rx.el.div(
-                        rx.el.span(
-                            "No stocks",
-                            class_name="text-sm font-medium text-gray-400 mb-1",
+                        rx.el.div(
+                            rx.el.span(
+                                "🌊", class_name="text-4xl mb-2 block text-center"
+                            ),
+                            rx.el.span(
+                                f"{stocks_in_stage.length()} Deals Archived",
+                                class_name="font-bold text-slate-700 block text-center",
+                            ),
+                            rx.el.span(
+                                "Click to view archive",
+                                class_name="text-xs text-slate-500 block text-center mt-1",
+                            ),
+                            class_name="bg-white/80 p-6 rounded-lg shadow-sm border border-slate-300 cursor-pointer hover:bg-white transition-colors hover:shadow-md group",
+                            on_click=KanbanState.open_ocean_modal,
                         ),
-                        rx.el.span(
-                            "Drop items here", class_name="text-xs text-gray-300"
+                        class_name="flex flex-col",
+                    ),
+                    rx.cond(
+                        stocks_in_stage.length() > 0,
+                        rx.foreach(
+                            stocks_in_stage,
+                            lambda stock: draggable_stock_card(
+                                key=stock.id, stock=stock
+                            ),
                         ),
-                        class_name=f"flex flex-col items-center justify-center h-32 border-2 border-dashed {stage.border_color} rounded-lg opacity-60",
+                        rx.el.div(
+                            rx.el.span(
+                                "No stocks",
+                                class_name="text-sm font-medium text-gray-400 mb-1",
+                            ),
+                            rx.el.span(
+                                "Drop items here", class_name="text-xs text-gray-300"
+                            ),
+                            class_name=f"flex flex-col items-center justify-center h-32 border-2 border-dashed {stage.border_color} rounded-lg opacity-60",
+                        ),
                     ),
                 ),
                 class_name="flex flex-col gap-3 min-h-[150px]",
@@ -414,93 +441,261 @@ def add_stock_modal() -> rx.Component:
     )
 
 
-def history_modal() -> rx.Component:
+def deal_detail_modal() -> rx.Component:
     """
-    Modal for viewing transition history.
+    Modal for viewing and editing deal details (Phase 11).
     """
     return rx.dialog.root(
         rx.dialog.content(
-            rx.dialog.title(f"History: {KanbanState.history_stock_ticker}"),
+            rx.dialog.title(
+                f"Deal Details: {KanbanState.current_detail_stock.company_name}",
+                class_name="mb-1",
+            ),
             rx.dialog.description(
-                "Record of stage transitions for this stock.", class_name="mb-4"
+                "Manage deal information and view activity history.",
+                class_name="text-sm text-gray-500 mb-4",
+            ),
+            rx.tabs.root(
+                rx.tabs.list(
+                    rx.tabs.trigger("Overview", value="overview"),
+                    rx.tabs.trigger("Activity Log", value="activity"),
+                ),
+                rx.tabs.content(
+                    rx.el.div(
+                        rx.el.div(
+                            rx.el.label(
+                                "Internal ID",
+                                class_name="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1",
+                            ),
+                            rx.el.div(
+                                KanbanState.current_detail_stock.id,
+                                class_name="text-sm font-mono bg-gray-100 px-3 py-2 rounded border border-gray-200 w-fit",
+                            ),
+                            class_name="mb-4",
+                        ),
+                        rx.el.div(
+                            rx.el.label(
+                                "Ticker Symbol",
+                                class_name="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1",
+                            ),
+                            rx.el.div(
+                                rx.el.input(
+                                    on_change=KanbanState.set_edit_ticker_value,
+                                    class_name="uppercase text-sm font-bold border border-gray-300 rounded-l px-3 py-2 focus:ring-blue-500 focus:border-blue-500",
+                                    default_value=KanbanState.edit_ticker_value,
+                                ),
+                                rx.el.button(
+                                    "Rename",
+                                    on_click=KanbanState.save_ticker_edit,
+                                    class_name="bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded-r hover:bg-blue-700 transition-colors",
+                                ),
+                                class_name="flex items-center",
+                            ),
+                            class_name="mb-4",
+                        ),
+                        rx.el.div(
+                            rx.el.label(
+                                "Current Stage",
+                                class_name="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1",
+                            ),
+                            rx.el.div(
+                                KanbanState.current_detail_stock.status,
+                                class_name="text-base font-medium text-gray-900",
+                            ),
+                            class_name="mb-4",
+                        ),
+                        rx.el.div(
+                            rx.el.label(
+                                "Time in Stage",
+                                class_name="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-1",
+                            ),
+                            rx.el.div(
+                                rx.icon(
+                                    "clock", class_name="h-4 w-4 text-gray-400 mr-2"
+                                ),
+                                rx.el.span(
+                                    f"{KanbanState.current_detail_stock.days_in_stage} Days",
+                                    class_name="font-medium",
+                                ),
+                                class_name="flex items-center text-gray-700 bg-gray-50 border border-gray-200 px-3 py-2 rounded w-fit",
+                            ),
+                            class_name="mb-4",
+                        ),
+                        class_name="py-4 space-y-4",
+                    ),
+                    value="overview",
+                ),
+                rx.tabs.content(
+                    rx.scroll_area(
+                        rx.el.table(
+                            rx.el.thead(
+                                rx.el.tr(
+                                    rx.el.th(
+                                        "Date",
+                                        class_name="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-2",
+                                    ),
+                                    rx.el.th(
+                                        "Transition",
+                                        class_name="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-2",
+                                    ),
+                                    rx.el.th(
+                                        "User",
+                                        class_name="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-2",
+                                    ),
+                                    rx.el.th(
+                                        "Comment",
+                                        class_name="text-left text-xs font-medium text-gray-500 uppercase tracking-wider py-2",
+                                    ),
+                                )
+                            ),
+                            rx.el.tbody(
+                                rx.foreach(
+                                    KanbanState.current_detail_logs,
+                                    lambda log: rx.el.tr(
+                                        rx.el.td(
+                                            rx.moment(
+                                                log.timestamp, format="MMM D, HH:mm"
+                                            ),
+                                            class_name="text-xs text-gray-600 py-3 border-b border-gray-100",
+                                        ),
+                                        rx.el.td(
+                                            rx.el.div(
+                                                rx.el.span(
+                                                    log.previous_stage,
+                                                    class_name="text-gray-400 line-through text-xs mr-1",
+                                                ),
+                                                rx.icon(
+                                                    "arrow-right",
+                                                    class_name="h-3 w-3 text-gray-300 mx-1 inline",
+                                                ),
+                                                rx.el.span(
+                                                    log.new_stage,
+                                                    class_name="font-medium text-blue-600 text-xs",
+                                                ),
+                                            ),
+                                            class_name="py-3 border-b border-gray-100",
+                                        ),
+                                        rx.el.td(
+                                            log.updated_by,
+                                            class_name="text-xs text-gray-600 py-3 border-b border-gray-100",
+                                        ),
+                                        rx.el.td(
+                                            rx.el.div(
+                                                rx.el.span(
+                                                    log.user_comment,
+                                                    class_name="block text-xs text-gray-800",
+                                                ),
+                                                rx.cond(
+                                                    log.is_forced_transition,
+                                                    rx.el.div(
+                                                        rx.el.span(
+                                                            "RATIONALE: ",
+                                                            class_name="font-bold text-[10px]",
+                                                        ),
+                                                        log.forced_rationale,
+                                                        class_name="mt-1 text-[10px] text-amber-800 bg-amber-50 p-1 rounded border border-amber-100",
+                                                    ),
+                                                ),
+                                            ),
+                                            class_name="py-3 border-b border-gray-100 max-w-[200px]",
+                                        ),
+                                        class_name=rx.cond(
+                                            log.is_forced_transition,
+                                            "bg-amber-50/50 hover:bg-amber-50 transition-colors",
+                                            "hover:bg-gray-50 transition-colors",
+                                        ),
+                                    ),
+                                )
+                            ),
+                            class_name="w-full",
+                        ),
+                        type="always",
+                        scrollbars="vertical",
+                        class_name="h-[300px]",
+                    ),
+                    value="activity",
+                ),
+                value=KanbanState.active_detail_tab,
+                on_change=KanbanState.set_active_detail_tab,
+                class_name="w-full",
+            ),
+            rx.el.div(
+                rx.dialog.close(
+                    rx.el.button(
+                        "Close",
+                        on_click=KanbanState.close_detail_modal,
+                        class_name="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 mt-4",
+                    )
+                ),
+                class_name="flex justify-end",
+            ),
+            max_width="700px",
+        ),
+        open=KanbanState.is_detail_modal_open,
+        on_open_change=lambda open: rx.cond(
+            open, rx.noop(), KanbanState.close_detail_modal
+        ),
+    )
+
+
+def ocean_archive_modal() -> rx.Component:
+    """
+    Modal for viewing the Ocean archive (Phase 12).
+    """
+    return rx.dialog.root(
+        rx.dialog.content(
+            rx.dialog.title("Ocean Archive"),
+            rx.dialog.description(
+                f"Archived deals ({KanbanState.ocean_stocks.length()} total)",
+                class_name="mb-4",
             ),
             rx.scroll_area(
                 rx.el.div(
                     rx.foreach(
-                        KanbanState.history_logs,
-                        lambda log: rx.el.div(
+                        KanbanState.ocean_stocks,
+                        lambda stock: rx.el.div(
                             rx.el.div(
                                 rx.el.span(
-                                    rx.moment(
-                                        log.timestamp, format="MMM D, YYYY HH:mm"
-                                    ),
-                                    class_name="text-xs text-gray-400 min-w-[120px]",
+                                    stock.ticker, class_name="font-bold text-gray-900"
                                 ),
-                                rx.el.div(
-                                    rx.el.div(
-                                        rx.el.span(
-                                            log.previous_stage,
-                                            class_name="text-gray-500 line-through mr-2",
-                                        ),
-                                        rx.icon(
-                                            "arrow-right",
-                                            class_name="h-3 w-3 text-gray-400 mx-1 inline",
-                                        ),
-                                        rx.el.span(
-                                            log.new_stage,
-                                            class_name="font-medium text-blue-600 ml-2",
-                                        ),
-                                        rx.cond(
-                                            log.previous_stage != "VOID",
-                                            rx.el.span(
-                                                f"({log.days_in_previous_stage} days in prev. stage)",
-                                                class_name="text-xs text-gray-400 ml-2",
-                                            ),
-                                        ),
-                                        rx.cond(
-                                            log.is_forced_transition,
-                                            rx.el.span(
-                                                "FORCED",
-                                                class_name="ml-2 px-1.5 py-0.5 text-[10px] font-bold text-white bg-amber-500 rounded uppercase tracking-wider",
-                                            ),
-                                        ),
-                                        class_name="text-sm flex items-center",
-                                    ),
-                                    rx.el.p(
-                                        log.user_comment,
-                                        class_name="text-xs text-gray-600 mt-1 italic",
-                                    ),
-                                    rx.el.p(
-                                        f"Updated by {log.updated_by}",
-                                        class_name="text-[10px] text-gray-400 mt-1",
-                                    ),
-                                    class_name="flex-1",
+                                rx.el.span(
+                                    stock.company_name,
+                                    class_name="text-sm text-gray-500 ml-2",
                                 ),
-                                class_name="flex gap-4 items-start",
+                                class_name="flex items-center",
                             ),
-                            class_name="border-b border-gray-100 last:border-0 pb-3 last:pb-0",
+                            rx.el.div(
+                                rx.icon(
+                                    "clock", class_name="h-3 w-3 text-gray-400 mr-1"
+                                ),
+                                rx.moment(stock.last_updated, from_now=True),
+                                class_name="flex items-center text-xs text-gray-400",
+                            ),
+                            class_name="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-200 cursor-pointer transition-all",
+                            on_click=lambda: KanbanState.open_detail_modal(stock.id),
                         ),
                     ),
-                    class_name="flex flex-col gap-3",
+                    class_name="flex flex-col gap-2",
                 ),
-                class_name="max-h-[400px] pr-4",
+                class_name="max-h-[500px] pr-2",
                 type="always",
                 scrollbars="vertical",
             ),
             rx.el.div(
                 rx.dialog.close(
                     rx.el.button(
-                        "Close",
-                        on_click=KanbanState.close_history,
-                        class_name="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50",
+                        "Close Archive",
+                        on_click=KanbanState.close_ocean_modal,
+                        class_name="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 mt-4",
                     )
                 ),
-                class_name="flex justify-end mt-6",
+                class_name="flex justify-end",
             ),
-            max_width="600px",
         ),
-        open=KanbanState.is_history_open,
-        on_open_change=lambda open: rx.cond(open, rx.noop(), KanbanState.close_history),
+        open=KanbanState.is_ocean_modal_open,
+        on_open_change=lambda open: rx.cond(
+            open, rx.noop(), KanbanState.close_ocean_modal
+        ),
     )
 
 
@@ -527,7 +722,8 @@ def index() -> rx.Component:
         confirmation_modal(),
         force_transition_modal(),
         add_stock_modal(),
-        history_modal(),
+        deal_detail_modal(),
+        ocean_archive_modal(),
         class_name="flex flex-col h-screen font-['Inter'] bg-gray-50",
         on_mount=KanbanState.on_load,
     )
