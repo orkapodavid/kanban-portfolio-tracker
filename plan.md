@@ -71,3 +71,24 @@
 - [x] Test state machine validation rules (forward progress, Ocean rule, restoration, skip warnings)
 - [x] Verify validation warnings display correctly in modal
 - [x] Test stage color coding across all 8 stages
+
+---
+
+## Phase 7: Deal Velocity & Staleness Tracking
+- [ ] Update Stock model to add `current_stage_entered_at` DateTime field
+- [ ] Add computed property `days_in_stage` that calculates (now - current_stage_entered_at)
+- [ ] Update move_stock() to set `current_stage_entered_at` when stage changes
+- [ ] Update submit_new_stock() to initialize `current_stage_entered_at` for new records
+- [ ] Initialize `current_stage_entered_at` for existing sample data in initialize_sample_data()
+- [ ] Update stock card UI to display staleness indicator
+- [ ] Implement conditional badge formatting: Green (<7 days), Default (7-30 days), Red (>30 days)
+- [ ] Add visual "Days in Stage" badge to each stock card
+
+---
+
+## Phase 8: UI Verification - Staleness Indicators
+- [ ] Verify staleness badges display correctly on all cards
+- [ ] Test conditional color formatting (Green/Red) based on days_in_stage
+- [ ] Verify days_in_stage updates correctly when stocks are moved
+- [ ] Test that new stocks show fresh indicators
+- [ ] Verify staleness persists across page reloads
