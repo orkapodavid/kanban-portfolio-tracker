@@ -123,10 +123,10 @@
 
 ---
 
-## Phase 10: UI Verification - Schema Refactor
-- [ ] Test drag-and-drop with new ID-based system (move stocks between stages)
-- [ ] Verify stock movements work correctly with stock_id references
-- [ ] Test ticker uniqueness constraint (try creating duplicate tickers)
-- [ ] Verify transition history displays correctly after refactor
-- [ ] Test that all modals and operations use stock_id correctly
-- [ ] Verify data consistency after stock movements
+## Phase 10: UI Verification - Schema Refactor ✅
+- [x] Test drag-and-drop with new ID-based system (move stocks between stages)
+- [x] Verify stock movements work correctly with stock_id references
+- [x] Test ticker uniqueness constraint (try creating duplicate tickers)
+- [x] Verify transition history displays correctly after refactor
+- [x] Test that all modals and operations use stock_id correctly
+- [x] Verify data consistency after stock movements
