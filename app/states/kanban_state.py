@@ -344,6 +344,9 @@ class KanbanState(rx.State):
         stock = next((s for s in self.stocks if s.id == stock_id), None)
         if stock:
             self.stocks = [s for s in self.stocks if s.id != stock_id]
+            if self.is_detail_modal_open and self.detail_stock_id == stock_id:
+                self.is_detail_modal_open = False
+                self.detail_stock_id = -1
             yield rx.toast.success(f"Deleted stock {stock.ticker}")
 
     @rx.event
