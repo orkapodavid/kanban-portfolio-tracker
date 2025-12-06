@@ -45,7 +45,21 @@
 
 ---
 
-## Phase 5: UI Verification and Testing ✅
+## Phase 5: State Machine Logic Implementation ✅
+- [x] Define strict StageDef enum with display names and associated colors
+- [x] Implement stage color mapping: Universe (Gray), Prospects (Blue), Outreach (Indigo), Discovery (Purple), Live Deal (Orange), Execute (Green), Tracker (Teal), Ocean (Slate/Dark Gray)
+- [x] Create validate_transition() function with business rules
+- [x] Implement forward progress validation (linear stage movement)
+- [x] Implement Ocean rule (can move to Ocean from ANY stage)
+- [x] Implement restoration rule (Ocean → Prospects only)
+- [x] Add skip validation (warn if skipping >2 stages, but allow it)
+- [x] Enhance move_stock() to use validation logic
+- [x] Display validation warnings in confirmation modal UI
+- [x] Log validation warnings in transition comments
+
+---
+
+## Phase 6: UI Verification and Testing ✅
 - [x] Test drag-and-drop functionality across all 8 stages
 - [x] Verify confirmation modal appears with correct stock and stage information
 - [x] Test "Add New Stock" modal with validation (duplicate tickers, empty fields)
@@ -54,3 +68,6 @@
 - [x] Verify delete stock functionality with toast notifications
 - [x] Test responsive layout and horizontal scrolling
 - [x] Verify empty state messaging appears in columns without stocks
+- [x] Test state machine validation rules (forward progress, Ocean rule, restoration, skip warnings)
+- [x] Verify validation warnings display correctly in modal
+- [x] Test stage color coding across all 8 stages
