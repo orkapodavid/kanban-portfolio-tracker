@@ -93,7 +93,7 @@ STAGES_DATA = [
     {
         "name": "Ocean",
         "color": "text-slate-700",
-        "bg_color": "bg-slate-100",
-        "border_color": "border-slate-300",
+        "bg_color": "bg-slate-200",
+        "border_color": "border-slate-400",
     },
 ]
