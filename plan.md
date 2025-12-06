@@ -97,29 +97,29 @@
 
 ---
 
-## Phase 9: Database Schema Refactor for Data Integrity
-- [ ] **Stock Model Refactor:**
-  - [ ] Add `id: int` field as auto-incrementing Primary Key
-  - [ ] Change `ticker: str` to a standard field with UNIQUE constraint
-  - [ ] Update Stock model to use `id` as the primary identifier
-  - [ ] Add data migration logic to populate IDs for existing records
-- [ ] **TransitionLog Model Refactor:**
-  - [ ] Add `id: int` field as auto-incrementing Primary Key
-  - [ ] Change Foreign Key from `ticker: str` to `stock_id: int`
-  - [ ] Update log creation to reference stock_id instead of ticker
-  - [ ] Migrate existing logs to use stock_id references
-- [ ] **State Logic Updates:**
-  - [ ] Update `move_stock()` to accept `stock_id: int` instead of `ticker: str`
-  - [ ] Update `delete_stock()` to use stock_id
-  - [ ] Update `view_history()` to query by stock_id
-  - [ ] Add `update_ticker()` method to rename tickers without breaking history
-  - [ ] Update internal state management to track stocks by ID
-- [ ] **Frontend Updates:**
-  - [ ] Change draggable component key from `stock.ticker` to `stock.id`
-  - [ ] Update drop event to send `stock_id` instead of `ticker`
-  - [ ] Update all UI references to use stock.id for operations
-  - [ ] Keep ticker display as visual label only
-  - [ ] Update history modal to fetch by stock_id
+## Phase 9: Database Schema Refactor for Data Integrity ✅
+- [x] **Stock Model Refactor:**
+  - [x] Add `id: int` field as auto-incrementing Primary Key
+  - [x] Change `ticker: str` to a standard field with UNIQUE constraint
+  - [x] Update Stock model to use `id` as the primary identifier
+  - [x] Add data migration logic to populate IDs for existing records
+- [x] **TransitionLog Model Refactor:**
+  - [x] Add `id: int` field as auto-incrementing Primary Key
+  - [x] Change Foreign Key from `ticker: str` to `stock_id: int`
+  - [x] Update log creation to reference stock_id instead of ticker
+  - [x] Migrate existing logs to use stock_id references
+- [x] **State Logic Updates:**
+  - [x] Update `move_stock()` to accept `stock_id: int` instead of `ticker: str`
+  - [x] Update `delete_stock()` to use stock_id
+  - [x] Update `view_history()` to query by stock_id
+  - [x] Add `update_ticker()` method to rename tickers without breaking history
+  - [x] Update internal state management to track stocks by ID
+- [x] **Frontend Updates:**
+  - [x] Change draggable component key from `stock.ticker` to `stock.id`
+  - [x] Update drop event to send `stock_id` instead of `ticker`
+  - [x] Update all UI references to use stock.id for operations
+  - [x] Keep ticker display as visual label only
+  - [x] Update history modal to fetch by stock_id
 
 ---
 
