@@ -65,6 +65,11 @@ class KanbanState(rx.State):
     def toggle_stale_filter(self):
         self.show_stale_only = not self.show_stale_only
 
+    @rx.event
+    def clear_filters(self):
+        self.search_query = ""
+        self.show_stale_only = False
+
     @rx.var
     def stocks_by_stage(self) -> dict[str, list[Stock]]:
         """
@@ -375,7 +380,12 @@ class KanbanState(rx.State):
                     forced_rationale=rationale,
                 )
                 self.logs.append(log)
+                if force_override:
+                    yield rx.toast.warning(f"Forced move: {ticker} → {new_stage}")
+                else:
+                    yield rx.toast.success(f"Moved {ticker} to {new_stage}")
                 break
+        self.stocks = list(self.stocks)
         if not found_stock:
             self.last_error = f"Stock {ticker} not found."
             return
