@@ -17,6 +17,7 @@ class Stock(rx.Base):
     last_updated: datetime | None = None
     current_stage_entered_at: datetime | None = None
     days_in_stage: int = 0
+    is_forced: bool = False
 
 
 class TransitionLog(rx.Base):
@@ -31,6 +32,8 @@ class TransitionLog(rx.Base):
     user_comment: str = ""
     updated_by: str = "System"
     days_in_previous_stage: int = 0
+    is_forced_transition: bool = False
+    forced_rationale: str = ""
 
 
 class StageDef(rx.Base):

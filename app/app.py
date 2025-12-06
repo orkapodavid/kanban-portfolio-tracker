@@ -78,7 +78,19 @@ def draggable_stock_card(stock: Stock) -> rx.Component:
                 ),
                 class_name="flex items-center mt-2 pt-2 border-t border-gray-50",
             ),
-            class_name="bg-white p-3 rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-blue-300 transition-all cursor-grab active:cursor-grabbing select-none group relative",
+            rx.cond(
+                stock.is_forced,
+                rx.el.div(
+                    rx.icon("flag", class_name="h-3 w-3 text-white"),
+                    class_name="absolute -top-1 -right-1 bg-amber-500 rounded-full p-1 shadow-sm",
+                    title="Forced Transition",
+                ),
+            ),
+            class_name=rx.cond(
+                stock.is_forced,
+                "bg-white p-3 rounded-lg shadow-sm border-2 border-amber-300 hover:shadow-md hover:border-amber-400 transition-all cursor-grab active:cursor-grabbing select-none group relative",
+                "bg-white p-3 rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-blue-300 transition-all cursor-grab active:cursor-grabbing select-none group relative",
+            ),
         ),
         type="stock",
         item={"ticker": stock.ticker},
@@ -147,20 +159,6 @@ def confirmation_modal() -> rx.Component:
                 "Please verify the details of this transition and add a required comment.",
                 class_name="mb-4",
             ),
-            rx.cond(
-                KanbanState.transition_warning != "",
-                rx.el.div(
-                    rx.icon(
-                        "flag_triangle_right",
-                        class_name="h-4 w-4 text-amber-600 mt-0.5",
-                    ),
-                    rx.el.p(
-                        KanbanState.transition_warning,
-                        class_name="text-sm text-amber-700 font-medium",
-                    ),
-                    class_name="bg-amber-50 border border-amber-200 rounded-md p-3 mb-4 flex items-start gap-3",
-                ),
-            ),
             rx.el.div(
                 rx.el.div(
                     rx.el.label(
@@ -224,6 +222,65 @@ def confirmation_modal() -> rx.Component:
         ),
         open=KanbanState.is_modal_open,
         on_open_change=lambda open: rx.cond(open, rx.noop(), KanbanState.cancel_move),
+    )
+
+
+def force_transition_modal() -> rx.Component:
+    """
+    Modal for handling invalid/forced transitions.
+    """
+    return rx.dialog.root(
+        rx.dialog.content(
+            rx.el.div(
+                rx.icon("triangle_alert", class_name="h-6 w-6 text-amber-600"),
+                rx.dialog.title("⚠ Invalid Transition Warning"),
+                class_name="flex items-center gap-2 mb-2",
+            ),
+            rx.dialog.description(
+                "You are moving this deal outside the standard process. This action will be flagged in the system.",
+                class_name="mb-4 text-gray-600",
+            ),
+            rx.el.div(
+                rx.el.div(
+                    rx.el.span(
+                        f"Reason: {KanbanState.transition_warning}",
+                        class_name="text-sm font-medium text-amber-700",
+                    ),
+                    class_name="bg-amber-50 border border-amber-200 rounded-md p-3 mb-4",
+                ),
+                rx.el.label(
+                    "Please provide a reason for this exception",
+                    class_name="text-sm font-medium text-gray-700 block mb-2",
+                ),
+                rx.el.textarea(
+                    placeholder="Rationale for forcing this move...",
+                    on_change=KanbanState.set_force_rationale,
+                    class_name="w-full rounded-md border border-gray-300 p-2 text-sm h-24 mb-6 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 resize-none",
+                    default_value=KanbanState.force_rationale,
+                ),
+                class_name="flex flex-col",
+            ),
+            rx.el.div(
+                rx.dialog.close(
+                    rx.el.button(
+                        "Cancel",
+                        on_click=KanbanState.close_force_modal,
+                        class_name="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50",
+                    )
+                ),
+                rx.el.button(
+                    "Confirm Force Move",
+                    on_click=KanbanState.confirm_force_move,
+                    disabled=KanbanState.force_rationale == "",
+                    class_name="px-4 py-2 text-sm font-medium text-white bg-amber-600 rounded-md hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed",
+                ),
+                class_name="flex justify-end gap-3",
+            ),
+        ),
+        open=KanbanState.is_force_modal_open,
+        on_open_change=lambda open: rx.cond(
+            open, rx.noop(), KanbanState.close_force_modal
+        ),
     )
 
 
@@ -392,6 +449,13 @@ def history_modal() -> rx.Component:
                                                 class_name="text-xs text-gray-400 ml-2",
                                             ),
                                         ),
+                                        rx.cond(
+                                            log.is_forced_transition,
+                                            rx.el.span(
+                                                "FORCED",
+                                                class_name="ml-2 px-1.5 py-0.5 text-[10px] font-bold text-white bg-amber-500 rounded uppercase tracking-wider",
+                                            ),
+                                        ),
                                         class_name="text-sm flex items-center",
                                     ),
                                     rx.el.p(
@@ -453,6 +517,7 @@ def index() -> rx.Component:
             class_name="flex-1 overflow-hidden py-6 bg-gray-100",
         ),
         confirmation_modal(),
+        force_transition_modal(),
         add_stock_modal(),
         history_modal(),
         class_name="flex flex-col h-screen font-['Inter'] bg-gray-50",

@@ -36,6 +36,8 @@ class KanbanState(rx.State):
     history_logs: list[TransitionLog] = []
     stock_to_delete: str = ""
     show_stale_only: bool = False
+    is_force_modal_open: bool = False
+    force_rationale: str = ""
 
     @rx.var
     def stages(self) -> list[str]:
@@ -77,13 +79,17 @@ class KanbanState(rx.State):
     @rx.event
     def validate_transition(
         self, current_stage: str, new_stage: str
-    ) -> tuple[bool, str]:
+    ) -> tuple[bool, bool, str]:
         """
         Validates if a transition is allowed based on business rules.
-        Returns: (is_valid, message)
+        Returns: (is_valid, is_forceable, message)
+
+        Valid: Standard process (i -> i+1), Ocean rejection (Any -> Ocean), Restoration (Ocean -> Prospects)
+        Forceable: Skips, Backward moves, Ocean -> Non-Prospects
+        Invalid (Non-forceable): Same stage
         """
         if current_stage == new_stage:
-            return (False, "Already in this stage.")
+            return (False, False, "Already in this stage.")
         try:
             current_idx = next(
                 (i for i, s in enumerate(self.stage_defs) if s.name == current_stage)
@@ -93,29 +99,29 @@ class KanbanState(rx.State):
             )
         except StopIteration as e:
             logging.exception(f"Error: {e}")
-            return (False, "Invalid stage definition.")
+            return (False, False, "Invalid stage definition.")
         if new_stage == "Ocean":
-            return (True, "")
+            return (True, False, "")
         if current_stage == "Ocean":
             if new_stage == "Prospects":
-                return (True, "")
-            return (False, "Items in Ocean can only be restored to Prospects.")
-        if new_idx < current_idx:
+                return (True, False, "")
             return (
                 False,
-                "Cannot move stocks backwards (unless restoring from Ocean).",
-            )
-        if new_idx - current_idx > 2:
-            return (
                 True,
-                f"Warning: You are skipping {new_idx - current_idx} stages. Please verify.",
+                "Non-standard restoration (Ocean only restores to Prospects).",
             )
-        return (True, "")
+        if new_idx == current_idx + 1:
+            return (True, False, "")
+        if new_idx < current_idx:
+            return (False, True, "Backward transition detected.")
+        if new_idx > current_idx + 1:
+            return (False, True, f"Skipping {new_idx - current_idx - 1} stages.")
+        return (False, True, "Unknown transition pattern.")
 
     @rx.event
     def handle_drop(self, item: dict[str, str], new_stage: str):
         """
-        Initiates a stock move when a card is dropped. Opens the confirmation modal.
+        Initiates a stock move when a card is dropped. Opens the confirmation modal or force modal.
         """
         ticker = item.get("ticker")
         if not ticker:
@@ -123,15 +129,20 @@ class KanbanState(rx.State):
         stock = next((s for s in self.stocks if s.ticker == ticker), None)
         if not stock:
             return
-        is_valid, message = self.validate_transition(stock.status, new_stage)
-        if not is_valid:
-            yield rx.toast.error(f"Move failed: {message}")
+        is_valid, is_forceable, message = self.validate_transition(
+            stock.status, new_stage
+        )
+        if not is_valid and (not is_forceable):
+            yield rx.toast.error(f"Move not allowed: {message}")
             return
-        if stock.status != new_stage:
-            self.pending_move_ticker = ticker
-            self.pending_move_stage = new_stage
+        self.pending_move_ticker = ticker
+        self.pending_move_stage = new_stage
+        self.transition_warning = message
+        if not is_valid and is_forceable:
+            self.force_rationale = ""
+            self.is_force_modal_open = True
+        else:
             self.modal_comment = ""
-            self.transition_warning = message
             self.is_modal_open = True
 
     @rx.event
@@ -148,8 +159,28 @@ class KanbanState(rx.State):
                 self.pending_move_stage,
                 final_comment,
                 self.modal_user,
+                force_override=False,
             )
         self.cancel_move()
+
+    @rx.event
+    def confirm_force_move(self):
+        """
+        Executes a forced transition.
+        """
+        if not self.force_rationale:
+            yield rx.toast.error("Rationale is required for forced transitions.")
+            return
+        if self.pending_move_ticker and self.pending_move_stage:
+            self.move_stock(
+                self.pending_move_ticker,
+                self.pending_move_stage,
+                self.force_rationale,
+                self.modal_user,
+                force_override=True,
+                rationale=self.force_rationale,
+            )
+        self.close_force_modal()
 
     @rx.event
     def cancel_move(self):
@@ -160,6 +191,14 @@ class KanbanState(rx.State):
         self.pending_move_ticker = ""
         self.pending_move_stage = ""
         self.modal_comment = ""
+        self.transition_warning = ""
+
+    @rx.event
+    def close_force_modal(self):
+        self.is_force_modal_open = False
+        self.pending_move_ticker = ""
+        self.pending_move_stage = ""
+        self.force_rationale = ""
         self.transition_warning = ""
 
     @rx.event
@@ -300,6 +339,8 @@ class KanbanState(rx.State):
         new_stage: str,
         comment: str = "Moved via UI",
         user: str = "Admin",
+        force_override: bool = False,
+        rationale: str = "",
     ):
         """
         Moves a stock to a new stage transactionally:
@@ -321,6 +362,7 @@ class KanbanState(rx.State):
                 stock.last_updated = get_utc_now()
                 stock.current_stage_entered_at = get_utc_now()
                 stock.days_in_stage = 0
+                stock.is_forced = force_override
                 log = TransitionLog(
                     ticker=ticker,
                     previous_stage=current_stage,
@@ -329,6 +371,8 @@ class KanbanState(rx.State):
                     user_comment=comment,
                     updated_by=user,
                     days_in_previous_stage=duration,
+                    is_forced_transition=force_override,
+                    forced_rationale=rationale,
                 )
                 self.logs.append(log)
                 break
