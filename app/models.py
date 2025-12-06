@@ -28,3 +28,66 @@ class TransitionLog(rx.Base):
     timestamp: datetime | None = None
     user_comment: str = ""
     updated_by: str = "System"
+
+
+class StageDef(rx.Base):
+    """
+    Defines the properties of a Kanban stage including styling.
+    """
+
+    name: str
+    color: str
+    bg_color: str
+    border_color: str
+
+
+STAGES_DATA = [
+    {
+        "name": "Universe",
+        "color": "text-gray-700",
+        "bg_color": "bg-gray-50",
+        "border_color": "border-gray-200",
+    },
+    {
+        "name": "Prospects",
+        "color": "text-blue-700",
+        "bg_color": "bg-blue-50",
+        "border_color": "border-blue-200",
+    },
+    {
+        "name": "Outreach",
+        "color": "text-indigo-700",
+        "bg_color": "bg-indigo-50",
+        "border_color": "border-indigo-200",
+    },
+    {
+        "name": "Discovery",
+        "color": "text-purple-700",
+        "bg_color": "bg-purple-50",
+        "border_color": "border-purple-200",
+    },
+    {
+        "name": "Live Deal",
+        "color": "text-orange-700",
+        "bg_color": "bg-orange-50",
+        "border_color": "border-orange-200",
+    },
+    {
+        "name": "Execute",
+        "color": "text-green-700",
+        "bg_color": "bg-green-50",
+        "border_color": "border-green-200",
+    },
+    {
+        "name": "Tracker",
+        "color": "text-teal-700",
+        "bg_color": "bg-teal-50",
+        "border_color": "border-teal-200",
+    },
+    {
+        "name": "Ocean",
+        "color": "text-slate-700",
+        "bg_color": "bg-slate-100",
+        "border_color": "border-slate-300",
+    },
+]

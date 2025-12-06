@@ -1,7 +1,7 @@
 import reflex as rx
 import reflex_enterprise as rxe
 from app.states.kanban_state import KanbanState
-from app.models import Stock
+from app.models import Stock, StageDef
 
 
 @rx.memo
@@ -60,24 +60,26 @@ def draggable_stock_card(stock: Stock) -> rx.Component:
 
 
 @rx.memo
-def droppable_stage_column(stage_name: str) -> rx.Component:
+def droppable_stage_column(stage: StageDef) -> rx.Component:
     """
     Renders a droppable column for a specific stage with counts and empty states.
     """
     drop_params = rxe.dnd.DropTarget.collected_params
-    stocks_in_stage = KanbanState.stocks_by_stage[stage_name]
+    stocks_in_stage = KanbanState.stocks_by_stage[stage.name]
+    base_style = f"flex-shrink-0 w-80 {stage.bg_color} rounded-xl p-4 h-full overflow-y-auto border {stage.border_color} transition-colors"
+    active_style = f"flex-shrink-0 w-80 {stage.bg_color} rounded-xl p-4 h-full overflow-y-auto border-2 border-blue-400 transition-colors"
     return rxe.dnd.drop_target(
         rx.el.div(
             rx.el.div(
                 rx.el.div(
-                    rx.el.h3(stage_name, class_name="font-semibold text-gray-700"),
+                    rx.el.h3(stage.name, class_name=f"font-semibold {stage.color}"),
                     rx.el.span(
                         stocks_in_stage.length(),
-                        class_name="ml-2 px-2 py-0.5 text-xs font-medium bg-gray-200 text-gray-600 rounded-full",
+                        class_name="ml-2 px-2 py-0.5 text-xs font-medium bg-white/50 text-gray-600 rounded-full border border-gray-100",
                     ),
                     class_name="flex items-center",
                 ),
-                class_name="flex items-center justify-between mb-4 sticky top-0 bg-gray-50/95 backdrop-blur py-2 z-10",
+                class_name=f"flex items-center justify-between mb-4 sticky top-0 {stage.bg_color} backdrop-blur py-2 z-10",
             ),
             rx.el.div(
                 rx.cond(
@@ -96,19 +98,15 @@ def droppable_stage_column(stage_name: str) -> rx.Component:
                         rx.el.span(
                             "Drop items here", class_name="text-xs text-gray-300"
                         ),
-                        class_name="flex flex-col items-center justify-center h-32 border-2 border-dashed border-gray-200 rounded-lg",
+                        class_name=f"flex flex-col items-center justify-center h-32 border-2 border-dashed {stage.border_color} rounded-lg opacity-60",
                     ),
                 ),
                 class_name="flex flex-col gap-3 min-h-[150px]",
             ),
-            class_name=rx.cond(
-                drop_params.is_over,
-                "flex-shrink-0 w-80 bg-blue-50 rounded-xl p-4 h-full overflow-y-auto border-2 border-blue-400 transition-colors",
-                "flex-shrink-0 w-80 bg-gray-50 rounded-xl p-4 h-full overflow-y-auto border border-gray-200 transition-colors",
-            ),
+            class_name=rx.cond(drop_params.is_over, active_style, base_style),
         ),
         accept=["stock"],
-        on_drop=lambda item: KanbanState.handle_drop(item, stage_name),
+        on_drop=lambda item: KanbanState.handle_drop(item, stage.name),
     )
 
 
@@ -122,6 +120,20 @@ def confirmation_modal() -> rx.Component:
             rx.dialog.description(
                 "Please verify the details of this transition and add a required comment.",
                 class_name="mb-4",
+            ),
+            rx.cond(
+                KanbanState.transition_warning != "",
+                rx.el.div(
+                    rx.icon(
+                        "flag_triangle_right",
+                        class_name="h-4 w-4 text-amber-600 mt-0.5",
+                    ),
+                    rx.el.p(
+                        KanbanState.transition_warning,
+                        class_name="text-sm text-amber-700 font-medium",
+                    ),
+                    class_name="bg-amber-50 border border-amber-200 rounded-md p-3 mb-4 flex items-start gap-3",
+                ),
             ),
             rx.el.div(
                 rx.el.div(
@@ -380,9 +392,9 @@ def index() -> rx.Component:
             rx.scroll_area(
                 rx.el.div(
                     rx.foreach(
-                        KanbanState.stages,
+                        KanbanState.stage_defs,
                         lambda stage: droppable_stage_column(
-                            stage_name=stage, key=stage
+                            stage=stage, key=stage.name
                         ),
                     ),
                     class_name="flex gap-6 px-6 pb-6 min-w-max",

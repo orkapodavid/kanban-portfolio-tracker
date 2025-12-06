@@ -2,18 +2,7 @@ import reflex as rx
 from typing import Optional
 from datetime import datetime, timezone
 import logging
-from app.models import Stock, TransitionLog, get_utc_now
-
-STAGES = [
-    "Universe",
-    "Prospects",
-    "Outreach",
-    "Discovery",
-    "Live Deal",
-    "Execute",
-    "Tracker",
-    "Ocean",
-]
+from app.models import Stock, TransitionLog, StageDef, STAGES_DATA, get_utc_now
 
 
 class KanbanState(rx.State):
@@ -23,12 +12,13 @@ class KanbanState(rx.State):
 
     stocks: list[Stock] = []
     logs: list[TransitionLog] = []
-    stages: list[str] = STAGES
+    stage_defs: list[StageDef] = [StageDef(**data) for data in STAGES_DATA]
     last_error: str = ""
     search_query: str = ""
     is_modal_open: bool = False
     pending_move_ticker: str = ""
     pending_move_stage: str = ""
+    transition_warning: str = ""
     modal_comment: str = ""
     modal_user: str = "Analyst A"
     available_users: list[str] = [
@@ -45,6 +35,11 @@ class KanbanState(rx.State):
     history_stock_ticker: str = ""
     history_logs: list[TransitionLog] = []
     stock_to_delete: str = ""
+
+    @rx.var
+    def stages(self) -> list[str]:
+        """Returns list of stage names for compatibility and iteration."""
+        return [s.name for s in self.stage_defs]
 
     @rx.var
     def filtered_stocks(self) -> list[Stock]:
@@ -72,6 +67,44 @@ class KanbanState(rx.State):
         return result
 
     @rx.event
+    def validate_transition(
+        self, current_stage: str, new_stage: str
+    ) -> tuple[bool, str]:
+        """
+        Validates if a transition is allowed based on business rules.
+        Returns: (is_valid, message)
+        """
+        if current_stage == new_stage:
+            return (False, "Already in this stage.")
+        try:
+            current_idx = next(
+                (i for i, s in enumerate(self.stage_defs) if s.name == current_stage)
+            )
+            new_idx = next(
+                (i for i, s in enumerate(self.stage_defs) if s.name == new_stage)
+            )
+        except StopIteration as e:
+            logging.exception(f"Error: {e}")
+            return (False, "Invalid stage definition.")
+        if new_stage == "Ocean":
+            return (True, "")
+        if current_stage == "Ocean":
+            if new_stage == "Prospects":
+                return (True, "")
+            return (False, "Items in Ocean can only be restored to Prospects.")
+        if new_idx < current_idx:
+            return (
+                False,
+                "Cannot move stocks backwards (unless restoring from Ocean).",
+            )
+        if new_idx - current_idx > 2:
+            return (
+                True,
+                f"Warning: You are skipping {new_idx - current_idx} stages. Please verify.",
+            )
+        return (True, "")
+
+    @rx.event
     def handle_drop(self, item: dict[str, str], new_stage: str):
         """
         Initiates a stock move when a card is dropped. Opens the confirmation modal.
@@ -80,10 +113,17 @@ class KanbanState(rx.State):
         if not ticker:
             return
         stock = next((s for s in self.stocks if s.ticker == ticker), None)
-        if stock and stock.status != new_stage:
+        if not stock:
+            return
+        is_valid, message = self.validate_transition(stock.status, new_stage)
+        if not is_valid:
+            yield rx.toast.error(f"Move failed: {message}")
+            return
+        if stock.status != new_stage:
             self.pending_move_ticker = ticker
             self.pending_move_stage = new_stage
             self.modal_comment = ""
+            self.transition_warning = message
             self.is_modal_open = True
 
     @rx.event
@@ -92,10 +132,13 @@ class KanbanState(rx.State):
         Executes the pending move after user confirmation.
         """
         if self.pending_move_ticker and self.pending_move_stage:
+            final_comment = self.modal_comment or "No comment provided"
+            if self.transition_warning:
+                final_comment = f"[{self.transition_warning}] {final_comment}"
             self.move_stock(
                 self.pending_move_ticker,
                 self.pending_move_stage,
-                self.modal_comment or "No comment provided",
+                final_comment,
                 self.modal_user,
             )
         self.cancel_move()
@@ -109,6 +152,7 @@ class KanbanState(rx.State):
         self.pending_move_ticker = ""
         self.pending_move_stage = ""
         self.modal_comment = ""
+        self.transition_warning = ""
 
     @rx.event
     def open_add_modal(self):
@@ -230,7 +274,7 @@ class KanbanState(rx.State):
         1. Updates the Stock record.
         2. Creates a TransitionLog entry.
         """
-        if new_stage not in STAGES:
+        if new_stage not in self.stages:
             self.last_error = f"Invalid stage: {new_stage}"
             return
         found_stock = False
