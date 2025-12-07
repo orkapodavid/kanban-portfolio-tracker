@@ -40,12 +40,12 @@
 ## Phase 4: Automated Testing Suite 🧪
 - [ ] Create `tests/` directory structure
 - [ ] Create `tests/test_logic.py` with pytest tests
-- [ ] Test 1: Valid transition validation (forward progress)
-- [ ] Test 2: Invalid transition validation (Ocean -> Live Deal blocked unless forced)
-- [ ] Test 3: Tracker accuracy (TransitionLog creation on move)
-- [ ] Test 4: days_in_stage calculation with timezone handling
+  - [ ] Test 1: Valid transition validation (forward progress)
+  - [ ] Test 2: Invalid transition validation (Ocean -> Live Deal blocked unless forced)
+  - [ ] Test 3: Tracker accuracy (TransitionLog creation on move)
+  - [ ] Test 4: days_in_stage calculation with timezone handling
 - [ ] Create `tests/test_state.py` for state management tests
-- [ ] Add pytest configuration and dependencies
+- [ ] Add pytest configuration to requirements.txt
 
 ---
 
