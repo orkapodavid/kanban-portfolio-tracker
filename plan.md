@@ -25,6 +25,7 @@
 - [x] Move action buttons to bottom "thumb zone" on mobile
 - [x] Add responsive breakpoints using Tailwind classes
 - [x] Test drag-and-drop works on touch devices
+- [x] **CRITICAL FIX:** Fixed mobile responsive logic that was hiding all columns except Universe on desktop
 
 ---
 
@@ -82,10 +83,17 @@
 - [x] Test hamburger menu navigation
 - [x] Verify touch targets meet 44x44px minimum
 - [x] Confirm all features function as documented
+- [x] **REGRESSION FIX:** Fixed critical bug where only Universe column was visible due to incorrect mobile conditional logic
 
 ---
 
 ## 🎉 PROJECT COMPLETE!
+
+### Recent Critical Fix:
+**Issue:** All Kanban stage columns except "Universe" disappeared from desktop view
+**Root Cause:** Mobile responsive conditional logic (`mobile_active_stage == stage.name`) was hiding columns on desktop
+**Solution:** Updated `app/pages/dashboard.py` to properly show all columns on desktop while maintaining mobile tab functionality
+**Status:** ✅ RESOLVED - All 8 stages now visible on desktop with horizontal scroll
 
 ### Deliverables Summary:
 ✅ **Code Architecture:** Modular, maintainable, type-hinted
@@ -96,10 +104,11 @@
 ✅ **Security:** No secrets in repo, proper .gitignore
 ✅ **UI/UX:** Production-ready interface with no visual defects
 ✅ **Public Repository:** https://github.com/orkapodavid/kanban-portfolio-tracker
+✅ **Regression Fix:** All Kanban stages restored and functional
 
 ### Key Statistics:
 - **Test Coverage:** 20 tests across 4 test classes
-- **Kanban Stages:** 8 with validation rules
+- **Kanban Stages:** 8 with validation rules (All visible and functional)
 - **Mobile Breakpoint:** 768px (Tailwind md:)
 - **Touch Targets:** 44x44px minimum
 - **Components:** 5 modular components
