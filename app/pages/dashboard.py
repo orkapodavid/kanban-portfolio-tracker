@@ -64,7 +64,7 @@ def dashboard_page() -> rx.Component:
                             key=f"desktop-{stage.name}",
                         ),
                     ),
-                    class_name="flex flex-col md:flex-row gap-6 px-4 md:px-6 pb-6 w-full h-full",
+                    class_name="flex flex-col md:flex-row gap-6 px-4 md:px-6 pb-6 h-full w-full",
                 ),
                 scrollbars="horizontal",
                 type="always",
