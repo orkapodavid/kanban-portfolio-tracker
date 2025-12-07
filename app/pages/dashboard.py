@@ -60,7 +60,11 @@ def dashboard_page() -> rx.Component:
                         KanbanState.stage_defs,
                         lambda stage: rx.el.div(
                             droppable_stage_column(stage=stage),
-                            class_name="hidden md:block md:w-80 h-full flex-shrink-0",
+                            class_name="md:w-80 h-full flex-shrink-0",
+                            style={
+                                "display": "none",
+                                "@media (min-width: 768px)": {"display": "block"},
+                            },
                             key=f"desktop-{stage.name}",
                         ),
                     ),
