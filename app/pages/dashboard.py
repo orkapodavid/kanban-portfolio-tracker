@@ -46,29 +46,29 @@ def dashboard_page() -> rx.Component:
                 rx.el.div(
                     rx.foreach(
                         KanbanState.stage_defs,
-                        lambda stage: rx.el.div(
-                            droppable_stage_column(stage=stage),
-                            class_name=rx.cond(
-                                KanbanState.mobile_active_stage == stage.name,
-                                "flex w-full h-full flex-shrink-0 md:hidden",
-                                "hidden",
+                        lambda stage: rx.cond(
+                            KanbanState.mobile_active_stage == stage.name,
+                            rx.box(
+                                droppable_stage_column(stage=stage),
+                                display=["block", "block", "none"],
+                                width="100%",
+                                height="100%",
+                                flex_shrink=0,
                             ),
-                            key=f"mobile-{stage.name}",
+                            rx.fragment(),
                         ),
                     ),
                     rx.foreach(
                         KanbanState.stage_defs,
-                        lambda stage: rx.el.div(
+                        lambda stage: rx.box(
                             droppable_stage_column(stage=stage),
-                            class_name="md:w-80 h-full flex-shrink-0",
-                            style={
-                                "display": "none",
-                                "@media (min-width: 768px)": {"display": "block"},
-                            },
-                            key=f"desktop-{stage.name}",
+                            display=["none", "none", "block"],
+                            width=["100%", "100%", "320px"],
+                            height="100%",
+                            flex_shrink=0,
                         ),
                     ),
-                    class_name="flex flex-col md:flex-row gap-6 px-4 md:px-6 pb-6 h-full w-full",
+                    class_name="flex flex-col md:flex-row gap-6 px-4 md:px-6 pb-6",
                 ),
                 scrollbars="horizontal",
                 type="always",
