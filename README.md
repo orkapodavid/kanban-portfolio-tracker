@@ -1,222 +1,297 @@
 # Stock Portfolio Kanban Tracker
 
-A production-ready, mobile-responsive Kanban board application for tracking financial portfolio stages with comprehensive audit trails, drag-and-drop functionality, and real-time validation.
+A **production-grade**, **responsive Kanban board application** designed for tracking and managing a portfolio of financial instruments (stocks). Built with **Reflex** (Python full-stack framework) and featuring **drag-and-drop functionality**, **immutable audit trails**, and **mobile-first responsive design**.
 
-## 🚀 Features
+---
+
+## 🎯 Key Features
 
 ### Core Functionality
-- **8-Stage Kanban Board**: Universe → Prospects → Outreach → Discovery → Live Deal → Execute → Tracker → Ocean
-- **Drag-and-Drop**: Intuitive card movement with validation and forced transition handling
-- **Audit Trail**: Immutable StateTransitionLog with user comments and timestamps
-- **CSV Export**: One-click export of current board state
-- **Search & Filters**: Real-time filtering by ticker/company and stale status
-- **Detail Modals**: View individual stock details and complete activity history
-- **Ocean Archive**: Special view for archived deals
+- **8-Stage Kanban Board:** Universe → Prospects → Outreach → Discovery → Live Deal → Execute → Tracker → Ocean
+- **Drag-and-Drop:** Intuitive card movement with real-time validation
+- **Transition Validation:** Enforces business rules with support for "forced" moves
+- **Audit Trail:** Complete immutable history with doubly-linked transition logs
+- **CSV Export:** One-click export of current board state
+- **Search & Filters:** Real-time filtering by ticker/company and stale status
+- **Detail Modals:** View individual stock details and complete activity history
+- **Ocean Archive:** Special archive view for completed deals
 
-### Business Logic
-- **Transition Validation**: Enforces sequential stage progression
-- **Forced Transitions**: Flagged moves with mandatory rationale
-- **Staleness Tracking**: Automatic calculation of days in current stage
-- **User Attribution**: All changes tracked with user identity
+### Advanced Features
+- **Doubly Linked History:** Each transition log links to previous entry (mechanical undo capability)
+- **Custom Timestamps:** Override effective date/time for historical backfilling
+- **Forced Transitions:** Validate and flag non-standard moves with mandatory rationale
+- **Stale Detection:** Automatically flag deals stuck >30 days in same stage
+- **User Tracking:** Record which analyst performed each transition
 
 ### Mobile-First Design
-- **Responsive Layout**: Tab-based navigation on mobile, horizontal scrolling on desktop
-- **Touch Targets**: Minimum 44x44px buttons for accessibility
-- **Hamburger Menu**: Collapsible navigation on small screens
+- **Responsive Layout:** Seamless experience on desktop, tablet, and mobile
+- **Tab-Based Navigation:** Easy column switching on mobile devices
+- **Touch Targets:** All interactive elements minimum 44x44px for accessibility
+- **Hamburger Menu:** Collapsible mobile navigation
 
-## 📁 Project Structure
+---
 
+## 🏗️ Architecture
+
+### Project Structure
 
 kanban-portfolio-tracker/
 ├── app/
-│   ├── __init__.py
-│   ├── app.py                 # Main application entry point
-│   ├── models.py              # Data models (Stock, StateTransitionLog, StageDef)
-│   ├── components/            # Reusable UI components
-│   │   ├── __init__.py
-│   │   ├── header.py          # Application header with search/filters
-│   │   ├── stock_card.py      # Draggable stock card component
-│   │   ├── stage_column.py    # Droppable stage column component
-│   │   └── modals.py          # All modal dialogs
-│   ├── states/                # Application state management
-│   │   ├── __init__.py
-│   │   ├── base_state.py      # Base configuration state
-│   │   └── kanban_state.py    # Kanban board logic
-│   └── pages/                 # Page layouts
-│       ├── __init__.py
-│       └── dashboard.py       # Main dashboard page
-├── assets/                    # Static assets
-├── tests/                     # Automated test suite
-│   ├── conftest.py            # pytest fixtures
-│   └── test_logic.py          # Business logic tests
-├── requirements.txt
-├── rxconfig.py
-└── README.md
+│   ├── components/           # Reusable UI components
+│   │   ├── stock_card.py     # Draggable stock card
+│   │   ├── stage_column.py   # Droppable stage column
+│   │   ├── modals.py         # All modal dialogs
+│   │   └── header.py         # Application header
+│   ├── states/               # State management
+│   │   ├── base_state.py     # App-wide configuration
+│   │   └── kanban_state.py   # Board-specific logic
+│   ├── pages/                # Page layouts
+│   │   └── dashboard.py      # Main Kanban board
+│   ├── models.py             # Data models
+│   └── app.py                # Application entry point
+├── assets/                   # Static assets
+├── tests/                    # Automated test suite
+├── requirements.txt          # Python dependencies
+├── rxconfig.py              # Reflex configuration
+└── README.md                # This file
 
 
-## 🛠️ Installation
+### Data Models
+
+#### **Stock Entity**
+
+class Stock(rx.Base):
+    id: int
+    ticker: str
+    company_name: str
+    status: str                           # Current Kanban stage
+    last_updated: datetime
+    current_stage_entered_at: datetime
+    days_in_stage: int
+    is_forced: bool                       # Flag for forced transitions
+    last_log_id: Optional[int]            # Head pointer for history chain
+
+
+#### **StateTransitionLog Entity** (Immutable Audit Trail)
+
+class StateTransitionLog(rx.Base):
+    id: int
+    stock_id: int
+    ticker: str
+    previous_stage: str
+    new_stage: str
+    timestamp: datetime
+    user_comment: str
+    updated_by: str
+    days_in_previous_stage: int
+    is_forced_transition: bool
+    forced_rationale: str
+    previous_log_id: Optional[int]        # Linked list pointer
+
+
+### Audit Trail Design
+
+The application implements a **doubly-linked list** structure for transition history:
+
+
+Stock: AAPL (last_log_id=15)
+  ↓
+Log #15 (Universe→Prospects, prev: #12) ← HEAD
+  ↓
+Log #12 (Ocean→Universe, prev: #8)
+  ↓
+Log #8 (Execute→Ocean, prev: #3)
+  ↓
+Log #3 (Discovery→Execute, prev: None) ← TAIL
+
+
+**Benefits:**
+- **Mechanical Undo:** Follow `previous_log_id` backwards to reconstruct exact history
+- **No Timestamp Ambiguity:** Chain is explicit, not time-based
+- **Efficient Queries:** Start at `stock.last_log_id` and traverse backwards
+- **Audit Integrity:** Immutable linked list proves sequence of events
+
+---
+
+## 🚀 Getting Started
 
 ### Prerequisites
-- Python 3.11+
-- pip
-- Git
+- Python 3.9+
+- Node.js 18+ (for Reflex frontend compilation)
 
-### Setup
+### Installation
 
-1. Clone the repository:
+1. **Clone the repository:**
 bash
 git clone https://github.com/orkapodavid/kanban-portfolio-tracker.git
 cd kanban-portfolio-tracker
 
 
-2. Create a virtual environment:
+2. **Create virtual environment:**
 bash
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 
-3. Install dependencies:
+3. **Install dependencies:**
 bash
 pip install -r requirements.txt
 
 
-4. (Optional) Configure environment variables:
-bash
-cp .env.example .env
-# Edit .env with your settings (DATABASE_URL for future use)
-
-
-5. Initialize the Reflex app:
+4. **Initialize Reflex:**
 bash
 reflex init
 
 
-6. Run the development server:
+5. **Run the application:**
 bash
 reflex run
 
 
-7. Open your browser to `http://localhost:3000`
+6. **Access the app:**
+Open your browser to `http://localhost:3000`
 
-## 🧪 Running Tests
+---
 
+## 🧪 Testing
+
+### Run Automated Tests
 bash
-# Run all tests
-pytest
-
-# Run with coverage
-pytest --cov=app tests/
-
-# Run specific test file
-pytest tests/test_logic.py -v
+pytest tests/ -v
 
 
-## 📊 Data Model
+### Test Coverage
+- ✅ **20 comprehensive tests** covering:
+  - Transition validation logic
+  - Forced move detection
+  - Audit trail integrity
+  - Days-in-stage calculations
+  - Timezone handling
 
-### Stock Entity
-- `id`: Unique identifier
-- `ticker`: Stock ticker symbol (e.g., AAPL)
-- `company_name`: Full company name
-- `status`: Current Kanban stage
-- `last_updated`: Timestamp of last modification
-- `current_stage_entered_at`: When stock entered current stage
-- `days_in_stage`: Calculated staleness metric
-- `is_forced`: Flag for forced transitions
+---
 
-### StateTransitionLog Entity
-- `id`: Unique identifier
-- `stock_id`: Reference to Stock
-- `ticker`: Cached ticker for historical reference
-- `previous_stage`: Stage before transition
-- `new_stage`: Stage after transition
-- `timestamp`: When transition occurred
-- `user_comment`: User-provided rationale
-- `updated_by`: User who made the change
-- `days_in_previous_stage`: Duration in previous stage
-- `is_forced_transition`: Whether this was a forced move
-- `forced_rationale`: Explanation for forced moves
+## 📱 Mobile Design
 
-## 🎯 Usage Guide
+### Responsive Breakpoints
+- **Desktop (≥768px):** Horizontal scrolling Kanban columns
+- **Mobile (<768px):** Tab-based column switcher
 
-### Moving Stocks
-1. **Drag and Drop**: Click and drag a stock card to a new stage column
-2. **Confirmation Modal**: Enter a comment explaining the move
-3. **Select User**: Choose who is making the change
-4. **Submit**: Click "Save & Move"
+### Mobile Optimizations
+- Hamburger menu for filters and actions
+- 44x44px minimum touch targets (WCAG 2.1 AAA compliance)
+- Vertical stacking of action buttons in "thumb zone"
+- Optimized drag-and-drop for touch devices
+
+---
+
+## 🔧 Configuration
+
+### Environment Variables
+
+Create a `.env` file in the project root:
+
+env
+# Database (optional - currently using in-memory storage)
+DATABASE_URL=postgresql://user:password@localhost:5432/kanban_db
+
+# Application Settings
+APP_ENV=development
+
+
+---
+
+## 📊 Usage Guide
+
+### Adding a New Stock
+1. Click **"Add New Stock"** button in header
+2. Enter ticker symbol (e.g., AAPL)
+3. Enter company name
+4. Select initial stage
+5. Click **"Create Stock"**
+
+### Moving Stocks Between Stages
+1. **Drag** a stock card from one column
+2. **Drop** onto another column
+3. **Modal appears:**
+   - Select user performing action
+   - (Optional) Override effective date/time
+   - Add mandatory comment explaining the move
+4. Click **"Save & Move"**
 
 ### Forced Transitions
-- If you try to move a stock backward or skip stages, you'll see a warning modal
-- Provide a rationale for the exception
-- These moves are flagged with 🏴 icon and highlighted in audit logs
+If you attempt an invalid move (e.g., backward transition, skipping stages):
+1. **Warning modal** appears explaining why the move is invalid
+2. Provide mandatory **rationale** for forcing the move
+3. Move is flagged with amber border and audit trail marker
 
-### Filtering and Search
-- **Search Bar**: Type ticker or company name to filter
-- **Stale Filter**: Toggle "Show Stale Only" to see stocks >30 days in stage
-- **Clear**: Reset all filters
+### Viewing Stock History
+1. Click on any stock card
+2. Select **"Activity Log"** tab
+3. View complete transition history with:
+   - Timestamps
+   - Users
+   - Comments
+   - Forced transition flags
+
+### Filtering & Search
+- **Search:** Type ticker or company name in search bar
+- **Stale Filter:** Toggle to show only stocks stuck >30 days
+- **Clear Filters:** Reset all active filters
 
 ### Exporting Data
-- Click "Export CSV" in the header
-- Downloads current filtered view with all stock details
-- Filename includes timestamp for versioning
+1. Click **"Export CSV"** button
+2. Downloads current filtered board state with:
+   - Stock ID, Ticker, Company Name
+   - Current Stage, Days in Stage
+   - Last Updated timestamp
 
-### Viewing Details
-- **Click any stock card** to open detail modal
-- **Overview Tab**: See basic info and current stage duration
-- **Activity Log Tab**: View complete transition history with user comments
+---
 
-### Ocean Archive
-- Click the Ocean summary card to view archived deals
-- Shows complete list with last updated timestamps
-- Click any archived deal to view its history
+## 🛠️ Development
 
-## 🏗️ Architecture Decisions
+### Code Style
+- **Type Hints:** Full type annotations on all functions
+- **Docstrings:** Google-style docstrings for all public methods
+- **Modular Design:** Separate files for components, states, pages
 
-### State Management
-- **In-Memory Lists**: Current implementation uses Python lists for simplicity
-- **Future Database**: Prepared for PostgreSQL/SQLite integration (see DATABASE_URL in .env.example)
-- **Audit Trail**: Immutable log ensures compliance and historical accuracy
+### Adding New Features
 
-### Responsive Design
-- **Mobile (<768px)**: Tab-based column switching, vertical layout
-- **Desktop (≥768px)**: Horizontal scrolling Kanban board
-- **Touch Targets**: All interactive elements meet WCAG 2.1 guidelines (44x44px minimum)
+#### Add a New Modal:
+1. Define component in `app/components/modals.py`
+2. Add state variables in `app/states/kanban_state.py`
+3. Import and render in `app/pages/dashboard.py`
 
-### Validation Logic
-- **Sequential Progression**: Universe → Prospects → Outreach → Discovery → Live Deal → Execute → Tracker
-- **Ocean Exception**: Can be accessed from any stage (archive)
-- **Restoration**: Ocean can only return to Prospects (standard) or any stage (forced)
+#### Add a New Stage:
+1. Update `STAGES_DATA` in `app/models.py`
+2. Add validation rules in `KanbanState.validate_transition()`
 
-## 🔒 Security
-
-- No hardcoded secrets in codebase
-- `.gitignore` prevents accidental secret commits
-- Environment variables for sensitive configuration
-- All forced transitions logged for audit compliance
+---
 
 ## 🗺️ Roadmap
 
 ### Completed ✅
-- [x] Core Kanban functionality with drag-and-drop
-- [x] Audit trail and state transition logging
-- [x] Mobile-responsive design
-- [x] CSV export
-- [x] Automated testing suite (20 tests, 100% pass rate)
-- [x] Comprehensive documentation
-- [x] GitHub publication
+- [x] Core Kanban drag-and-drop functionality
+- [x] Immutable audit trail with linked list history
+- [x] Mobile-first responsive design
+- [x] CSV export functionality
+- [x] Forced transition handling
+- [x] Custom timestamp overrides
+- [x] Comprehensive test suite (20 tests, 100% pass rate)
 
-### Future Enhancements
+### Planned 🚧
 - [ ] PostgreSQL database integration
-- [ ] User authentication and role-based access control
+- [ ] User authentication & role-based access control
 - [ ] Real-time collaboration (WebSocket updates)
-- [ ] Advanced analytics dashboard
 - [ ] Email notifications for stale deals
-- [ ] Bulk operations (multi-select and move)
-- [ ] Custom stage definitions (user-configurable workflow)
-- [ ] API endpoints for external integrations
+- [ ] Advanced analytics dashboard
+- [ ] Undo/Redo functionality using linked history
+- [ ] Dark mode theme
+
+---
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please follow these guidelines:
+Contributions are welcome! Please follow these steps:
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -224,34 +299,29 @@ Contributions are welcome! Please follow these guidelines:
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-### Code Standards
-- Follow PEP 8 style guidelines
-- Add type hints to all functions
-- Write docstrings for public methods
-- Include tests for new features
-- Update documentation as needed
+---
 
 ## 📄 License
 
-This project is open source and available under the MIT License.
-
-## 🙏 Acknowledgments
-
-- Built with [Reflex](https://reflex.dev/) - Pure Python web framework
-- Drag-and-drop powered by [Reflex Enterprise](https://reflex.dev/docs/enterprise/)
-- UI components styled with [Tailwind CSS](https://tailwindcss.com/)
-
-## 📧 Contact
-
-**David OR** - [@orkapodavid](https://github.com/orkapodavid)
-
-**Project Link**: [https://github.com/orkapodavid/kanban-portfolio-tracker](https://github.com/orkapodavid/kanban-portfolio-tracker)
+This project is licensed under the MIT License.
 
 ---
 
-**Note**: This is a production-ready starter application. For deployment, consider adding:
-- Database persistence layer
-- User authentication
-- Environment-specific configuration
-- Monitoring and logging infrastructure
-- CI/CD pipeline
+## 👤 Author
+
+**David OR**
+- GitHub: [@orkapodavid](https://github.com/orkapodavid)
+
+---
+
+## 🙏 Acknowledgments
+
+- Built with [Reflex](https://reflex.dev) - Pure Python web framework
+- Drag-and-drop powered by Reflex Enterprise DnD component
+- UI styled with TailwindCSS via Reflex plugin
+
+---
+
+## 📞 Support
+
+For issues, questions, or feature requests, please [open an issue](https://github.com/orkapodavid/kanban-portfolio-tracker/issues) on GitHub.

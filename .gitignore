@@ -20,24 +20,21 @@ wheels/
 .installed.cfg
 *.egg
 
-# Virtual Environment
+# Virtual environments
 venv/
 ENV/
 env/
-.venv
 
 # Reflex
 .web/
-assets/generated/
+uploaded_files/
+reflex.db
 
-# Environment Variables & Secrets
+# Environment variables
 .env
 .env.local
-*.pem
-*.key
-secrets.json
 
-# IDEs
+# IDE
 .vscode/
 .idea/
 *.swp
@@ -48,10 +45,10 @@ secrets.json
 .DS_Store
 Thumbs.db
 
-# Logs
-*.log
-
 # Testing
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Logs
+*.log
