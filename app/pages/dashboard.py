@@ -42,37 +42,37 @@ def dashboard_page() -> rx.Component:
                 ),
                 class_name="md:hidden sticky top-0 z-10",
             ),
-            rx.scroll_area(
-                rx.el.div(
-                    rx.foreach(
-                        KanbanState.stage_defs,
-                        lambda stage: rx.cond(
-                            KanbanState.mobile_active_stage == stage.name,
-                            rx.box(
-                                droppable_stage_column(stage=stage),
-                                display=["block", "block", "none"],
-                                width="100%",
-                                height="100%",
-                                flex_shrink=0,
-                            ),
-                            rx.fragment(),
-                        ),
-                    ),
-                    rx.foreach(
-                        KanbanState.stage_defs,
-                        lambda stage: rx.box(
+            rx.el.div(
+                rx.foreach(
+                    KanbanState.stage_defs,
+                    lambda stage: rx.cond(
+                        KanbanState.mobile_active_stage == stage.name,
+                        rx.el.div(
                             droppable_stage_column(stage=stage),
-                            display=["none", "none", "block"],
-                            width=["100%", "100%", "320px"],
-                            height="100%",
-                            flex_shrink=0,
+                            class_name="h-full w-full p-4",
                         ),
+                        rx.fragment(),
                     ),
-                    class_name="flex flex-col md:flex-row gap-6 px-4 md:px-6 pb-6",
                 ),
-                scrollbars="horizontal",
-                type="always",
-                class_name="w-full h-full",
+                class_name="md:hidden w-full h-full flex-1 overflow-hidden",
+            ),
+            rx.el.div(
+                rx.scroll_area(
+                    rx.el.div(
+                        rx.foreach(
+                            KanbanState.stage_defs,
+                            lambda stage: rx.el.div(
+                                droppable_stage_column(stage=stage),
+                                class_name="w-80 flex-shrink-0 h-full",
+                            ),
+                        ),
+                        class_name="flex flex-row gap-6 px-6 pb-6 h-full min-w-max",
+                    ),
+                    scrollbars="horizontal",
+                    type="always",
+                    class_name="w-full h-full",
+                ),
+                class_name="hidden md:flex w-full h-full flex-1 overflow-hidden",
             ),
             class_name="flex-1 overflow-hidden py-0 md:py-6 bg-gray-100 flex flex-col",
         ),
