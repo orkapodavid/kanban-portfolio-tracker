@@ -25,9 +25,12 @@ def draggable_stock_card(stock: Stock) -> rx.Component:
             rx.el.div(
                 rx.menu.root(
                     rx.menu.trigger(
-                        rx.icon(
-                            "send_horizontal",
-                            class_name="text-gray-400 h-5 w-5 hover:text-blue-600 cursor-pointer",
+                        rx.el.button(
+                            rx.icon(
+                                "send_horizontal",
+                                class_name="text-gray-400 h-5 w-5 hover:text-blue-600",
+                            ),
+                            class_name="h-8 w-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors min-h-[44px] min-w-[44px] md:min-h-0 md:min-w-0",
                         )
                     ),
                     rx.menu.content(

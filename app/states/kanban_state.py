@@ -37,6 +37,8 @@ class KanbanState(BaseState):
     is_ocean_modal_open: bool = False
     next_stock_id: int = 1
     next_log_id: int = 1
+    is_mobile_menu_open: bool = False
+    mobile_active_stage: str = "Universe"
 
     @rx.var
     def current_detail_stock(self) -> Stock:
@@ -106,6 +108,21 @@ class KanbanState(BaseState):
     def toggle_stale_filter(self):
         """Toggles the stale stock filter on/off."""
         self.show_stale_only = not self.show_stale_only
+
+    @rx.event
+    def toggle_mobile_menu(self):
+        """Toggles the visibility of the mobile navigation menu."""
+        self.is_mobile_menu_open = not self.is_mobile_menu_open
+
+    @rx.event
+    def set_mobile_active_stage(self, stage_name: str):
+        """
+        Sets the currently active stage for mobile view.
+
+        Args:
+            stage_name (str): The name of the stage to display.
+        """
+        self.mobile_active_stage = stage_name
 
     @rx.event
     def set_search_query(self, query: str):

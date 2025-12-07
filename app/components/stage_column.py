@@ -19,8 +19,8 @@ def droppable_stage_column(stage: StageDef) -> rx.Component:
     """
     drop_params = rxe.dnd.DropTarget.collected_params
     stocks_in_stage = KanbanState.stocks_by_stage[stage.name]
-    base_style = f"flex-shrink-0 w-80 {stage.bg_color} rounded-xl p-4 h-full overflow-y-auto border {stage.border_color} transition-colors"
-    active_style = f"flex-shrink-0 w-80 {stage.bg_color} rounded-xl p-4 h-full overflow-y-auto border-2 border-blue-400 transition-colors"
+    base_style = f"flex-shrink-0 w-full md:w-80 {stage.bg_color} rounded-xl p-4 h-full overflow-y-auto border {stage.border_color} transition-colors"
+    active_style = f"flex-shrink-0 w-full md:w-80 {stage.bg_color} rounded-xl p-4 h-full overflow-y-auto border-2 border-blue-400 transition-colors"
     return rxe.dnd.drop_target(
         rx.el.div(
             rx.el.div(
