@@ -50,10 +50,18 @@ def dashboard_page() -> rx.Component:
                             droppable_stage_column(stage=stage),
                             class_name=rx.cond(
                                 KanbanState.mobile_active_stage == stage.name,
-                                "flex md:flex w-full md:w-auto h-full flex-shrink-0",
-                                "hidden md:flex md:w-auto h-full flex-shrink-0",
+                                "flex w-full h-full flex-shrink-0 md:hidden",
+                                "hidden",
                             ),
-                            key=stage.name,
+                            key=f"mobile-{stage.name}",
+                        ),
+                    ),
+                    rx.foreach(
+                        KanbanState.stage_defs,
+                        lambda stage: rx.el.div(
+                            droppable_stage_column(stage=stage),
+                            class_name="hidden md:flex w-auto h-full flex-shrink-0",
+                            key=f"desktop-{stage.name}",
                         ),
                     ),
                     class_name="flex flex-col md:flex-row gap-6 px-4 md:px-6 pb-6 min-w-full md:min-w-max h-full",
