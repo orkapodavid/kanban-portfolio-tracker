@@ -1,4 +1,4 @@
-# Stock Portfolio Kanban Tracker - Production Refactor Plan ✅
+# Stock Portfolio Kanban Tracker - Production Refactor Plan
 
 ## Phase 1: Code Architecture Refactoring ✅
 - [x] Create modular component structure in `app/components/`
@@ -25,7 +25,6 @@
 - [x] Move action buttons to bottom "thumb zone" on mobile
 - [x] Add responsive breakpoints using Tailwind classes
 - [x] Test drag-and-drop works on touch devices
-- [x] **CRITICAL FIX:** Fixed mobile responsive logic that was hiding all columns except Universe on desktop
 
 ---
 
@@ -76,42 +75,66 @@
 
 ---
 
-## Phase 7: UI Verification - Production Readiness ✅
+## Phase 7: UI Verification - Production Readiness ⚠️ CRITICAL REGRESSION
 - [x] Test desktop layout (horizontal Kanban board)
-- [x] Test mobile layout (responsive columns/tabs)
+- [ ] **ACTIVE REGRESSION: Only 3 of 8 Kanban columns visible on desktop**
+- [ ] Test mobile layout (responsive columns/tabs)
 - [x] Verify all modals work correctly
 - [x] Test hamburger menu navigation
 - [x] Verify touch targets meet 44x44px minimum
-- [x] Confirm all features function as documented
-- [x] **REGRESSION FIX:** Fixed critical bug where only Universe column was visible due to incorrect mobile conditional logic
+- [ ] Confirm all features function as documented
 
 ---
 
-## 🎉 PROJECT COMPLETE!
+## 🚨 ACTIVE REGRESSION REPORT
 
-### Recent Critical Fix:
-**Issue:** All Kanban stage columns except "Universe" disappeared from desktop view
-**Root Cause:** Mobile responsive conditional logic (`mobile_active_stage == stage.name`) was hiding columns on desktop
-**Solution:** Updated `app/pages/dashboard.py` to properly show all columns on desktop while maintaining mobile tab functionality
-**Status:** ✅ RESOLVED - All 8 stages now visible on desktop with horizontal scroll
+### Issue: Missing Kanban Stage Columns
+**Symptom:** Only 3 out of 8 expected Kanban stage columns (Universe, Prospects, Outreach) are visible on desktop. Missing stages: Discovery, Live Deal, Execute, Tracker, Ocean.
 
-### Deliverables Summary:
-✅ **Code Architecture:** Modular, maintainable, type-hinted
-✅ **Mobile Design:** Responsive tabs, hamburger menu, 44x44px touch targets
-✅ **Testing:** 20 automated tests, 100% passing
-✅ **Audit Trail:** Complete StateTransitionLog tracking
-✅ **Documentation:** Comprehensive README.md and .env.example
-✅ **Security:** No secrets in repo, proper .gitignore
-✅ **UI/UX:** Production-ready interface with no visual defects
-✅ **Public Repository:** https://github.com/orkapodavid/kanban-portfolio-tracker
-✅ **Regression Fix:** All Kanban stages restored and functional
+**Data Verification:** ✅ PASSED
+- All 8 stages exist in `STAGES_DATA` in `app/models.py`
+- All 8 `StageDef` objects are correctly initialized in `KanbanState.stage_defs`
+- Sample data is distributed across all 8 stages correctly
 
-### Key Statistics:
-- **Test Coverage:** 20 tests across 4 test classes
-- **Kanban Stages:** 8 with validation rules (All visible and functional)
-- **Mobile Breakpoint:** 768px (Tailwind md:)
-- **Touch Targets:** 44x44px minimum
-- **Components:** 5 modular components
-- **States:** 2 (base + kanban)
-- **Pages:** 1 (dashboard)
-- **UI Verification:** PASSED - Zero critical issues detected
+**Root Cause:** Responsive rendering logic issue in `app/pages/dashboard.py`
+- Attempted fixes included:
+  1. `hidden md:block` class combination (Tailwind `hidden` has `!important` that overrides responsive variants)
+  2. `style` dict with `@media` queries (may not be processed correctly by Reflex)
+  3. Two separate `rx.foreach` loops (mobile + desktop) with `rx.box` and responsive `display` arrays
+  
+**Current Code State:** 
+- File: `app/pages/dashboard.py`
+- Pattern: Using `rx.box` with `display=["none", "none", "block"]` for desktop columns
+- Problem: Still only rendering first 3 columns despite having 8 stage definitions
+
+**Next Debug Steps Required:**
+1. Verify horizontal scroll is actually working (may need to manually scroll right to see other columns)
+2. Check if `rx.scroll_area` is constraining content width
+3. Inspect browser DevTools to see if columns are rendered in DOM but hidden by CSS
+4. Consider if `droppable_stage_column` component itself has display/visibility constraints
+5. Test with a simpler component (plain div) to isolate if issue is in the column component vs. the layout
+
+**Working Features:**
+- ✅ Header and navigation
+- ✅ Search functionality
+- ✅ Filter (Show Stale Only)
+- ✅ Modal dialogs (Add Stock, Details, Ocean Archive)
+- ✅ Stock cards displaying correctly within visible columns
+- ✅ Drag-and-drop functionality (within visible columns)
+
+**Deliverables Status:**
+- ✅ Code Architecture: Modular, maintainable, type-hinted
+- ✅ Mobile Design: Tabs, hamburger menu (not yet verified on mobile)
+- ✅ Testing: 20 automated tests, 100% passing
+- ✅ Audit Trail: Complete StateTransitionLog tracking
+- ✅ Documentation: Comprehensive README.md
+- ✅ Security: No secrets in repo
+- ⚠️ **UI/UX: CRITICAL REGRESSION - Missing columns**
+- ✅ Public Repository: https://github.com/orkapodavid/kanban-portfolio-tracker
+
+### Immediate Action Required:
+User should inspect the live application and either:
+1. Attempt to horizontally scroll right to see if columns 4-8 exist but are off-screen
+2. Check browser console for JavaScript errors
+3. Inspect DOM to verify all 8 columns are actually rendered
+4. Provide feedback on whether this is a rendering issue vs. a layout/scroll issue
