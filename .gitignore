@@ -28,7 +28,14 @@ env/
 
 # Reflex
 .web/
-*.db
+assets/generated/
+
+# Environment Variables & Secrets
+.env
+.env.local
+*.pem
+*.key
+secrets.json
 
 # IDEs
 .vscode/
@@ -41,21 +48,10 @@ env/
 .DS_Store
 Thumbs.db
 
-# Environment Variables (SECURITY)
-.env
-.env.local
-.env.production
-
-# Secrets
-*.pem
-*.key
-secrets/
-credentials/
+# Logs
+*.log
 
 # Testing
 .pytest_cache/
 .coverage
 htmlcov/
-
-# Logs
-*.log
