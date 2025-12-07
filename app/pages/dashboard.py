@@ -50,7 +50,7 @@ def dashboard_page() -> rx.Component:
                             droppable_stage_column(stage=stage),
                             class_name=rx.cond(
                                 KanbanState.mobile_active_stage == stage.name,
-                                "block w-full md:w-auto h-full flex-shrink-0",
+                                "block w-full md:w-auto md:block h-full flex-shrink-0",
                                 "hidden md:block md:w-auto h-full flex-shrink-0",
                             ),
                             key=stage.name,
