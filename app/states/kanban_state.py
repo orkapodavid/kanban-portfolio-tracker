@@ -3,11 +3,13 @@ from typing import Optional
 from datetime import datetime, timezone, timedelta
 import logging
 from app.models import Stock, TransitionLog, StageDef, STAGES_DATA, get_utc_now
+from app.states.base_state import BaseState
 
 
-class KanbanState(rx.State):
+class KanbanState(BaseState):
     """
     Manages the state of the Kanban board, including stock data and transitions.
+    Inherits from BaseState for shared app configuration.
     """
 
     stocks: list[Stock] = []
@@ -15,6 +17,7 @@ class KanbanState(rx.State):
     stage_defs: list[StageDef] = [StageDef(**data) for data in STAGES_DATA]
     last_error: str = ""
     search_query: str = ""
+    show_stale_only: bool = False
     is_modal_open: bool = False
     pending_move_ticker: str = ""
     pending_move_stock_id: int = -1
@@ -22,34 +25,27 @@ class KanbanState(rx.State):
     transition_warning: str = ""
     modal_comment: str = ""
     modal_user: str = "Analyst A"
-    next_stock_id: int = 1
-    next_log_id: int = 1
-    available_users: list[str] = [
-        "Analyst A",
-        "Analyst B",
-        "Portfolio Manager",
-        "Compliance Officer",
-    ]
+    is_force_modal_open: bool = False
+    force_rationale: str = ""
     is_add_modal_open: bool = False
     new_stock_ticker: str = ""
     new_stock_company: str = ""
     new_stock_stage: str = "Universe"
-    is_history_open: bool = False
-    history_stock_ticker: str = ""
-    history_logs: list[TransitionLog] = []
-    stock_to_delete: str = ""
-    show_stale_only: bool = False
-    is_force_modal_open: bool = False
-    force_rationale: str = ""
     is_detail_modal_open: bool = False
     detail_stock_id: int = -1
     active_detail_tab: str = "overview"
-    edit_ticker_value: str = ""
     is_ocean_modal_open: bool = False
+    next_stock_id: int = 1
+    next_log_id: int = 1
 
     @rx.var
     def current_detail_stock(self) -> Stock:
-        """Returns the stock currently being viewed in the detail modal."""
+        """
+        Returns the stock currently being viewed in the detail modal.
+
+        Returns:
+            Stock: The stock object or a default empty stock if not found.
+        """
         return next(
             (s for s in self.stocks if s.id == self.detail_stock_id),
             Stock(id=-1, ticker="", company_name="", status=""),
@@ -57,24 +53,42 @@ class KanbanState(rx.State):
 
     @rx.var
     def current_detail_logs(self) -> list[TransitionLog]:
-        """Returns history logs for the detailed stock."""
+        """
+        Returns history logs for the detailed stock.
+
+        Returns:
+            list[TransitionLog]: List of transition logs sorted by timestamp descending.
+        """
         logs = [log for log in self.logs if log.stock_id == self.detail_stock_id]
         return sorted(logs, key=lambda x: x.timestamp or get_utc_now(), reverse=True)
 
     @rx.var
     def ocean_stocks(self) -> list[Stock]:
-        """Returns all stocks in the Ocean stage."""
+        """
+        Returns all stocks in the Ocean stage.
+
+        Returns:
+            list[Stock]: List of stocks in 'Ocean' status.
+        """
         return [s for s in self.stocks if s.status == "Ocean"]
 
     @rx.var
     def stages(self) -> list[str]:
-        """Returns list of stage names for compatibility and iteration."""
+        """
+        Returns list of stage names for compatibility and iteration.
+
+        Returns:
+            list[str]: List of stage names.
+        """
         return [s.name for s in self.stage_defs]
 
     @rx.var
     def filtered_stocks(self) -> list[Stock]:
         """
         Returns stocks matching the search query and filters.
+
+        Returns:
+            list[Stock]: List of filtered stock objects.
         """
         stocks = self.stocks
         if self.search_query:
@@ -90,10 +104,22 @@ class KanbanState(rx.State):
 
     @rx.event
     def toggle_stale_filter(self):
+        """Toggles the stale stock filter on/off."""
         self.show_stale_only = not self.show_stale_only
 
     @rx.event
+    def set_search_query(self, query: str):
+        """
+        Sets the search query for filtering stocks.
+
+        Args:
+            query (str): The search text.
+        """
+        self.search_query = query
+
+    @rx.event
     def clear_filters(self):
+        """Clears all active filters (search and stale)."""
         self.search_query = ""
         self.show_stale_only = False
 
@@ -101,6 +127,9 @@ class KanbanState(rx.State):
     def stocks_by_stage(self) -> dict[str, list[Stock]]:
         """
         Returns filtered stocks organized by stage for easier rendering.
+
+        Returns:
+            dict[str, list[Stock]]: Dictionary mapping stage names to lists of stocks.
         """
         result = {stage: [] for stage in self.stages}
         for stock in self.filtered_stocks:
@@ -114,11 +143,13 @@ class KanbanState(rx.State):
     ) -> tuple[bool, bool, str]:
         """
         Validates if a transition is allowed based on business rules.
-        Returns: (is_valid, is_forceable, message)
 
-        Valid: Standard process (i -> i+1), Ocean rejection (Any -> Ocean), Restoration (Ocean -> Prospects)
-        Forceable: Skips, Backward moves, Ocean -> Non-Prospects
-        Invalid (Non-forceable): Same stage
+        Args:
+            current_stage (str): The current stage of the stock.
+            new_stage (str): The target stage.
+
+        Returns:
+            tuple[bool, bool, str]: (is_valid, is_forceable, message)
         """
         if current_stage == new_stage:
             return (False, False, "Already in this stage.")
@@ -154,6 +185,10 @@ class KanbanState(rx.State):
     def handle_drop(self, item: dict[str, str | int], new_stage: str):
         """
         Initiates a stock move when a card is dropped. Opens the confirmation modal or force modal.
+
+        Args:
+            item (dict): The dropped item data containing 'stock_id'.
+            new_stage (str): The name of the stage dropped onto.
         """
         stock_id = item.get("stock_id")
         if not stock_id:
@@ -234,6 +269,7 @@ class KanbanState(rx.State):
 
     @rx.event
     def close_force_modal(self):
+        """Closes the force transition modal and resets state."""
         self.is_force_modal_open = False
         self.pending_move_stock_id = -1
         self.pending_move_ticker = ""
@@ -243,6 +279,7 @@ class KanbanState(rx.State):
 
     @rx.event
     def open_add_modal(self):
+        """Opens the add stock modal and resets form fields."""
         self.is_add_modal_open = True
         self.new_stock_ticker = ""
         self.new_stock_company = ""
@@ -250,44 +287,83 @@ class KanbanState(rx.State):
 
     @rx.event
     def close_add_modal(self):
+        """Closes the add stock modal."""
         self.is_add_modal_open = False
 
     @rx.event
     def open_detail_modal(self, stock_id: int, tab: str = "overview"):
+        """
+        Opens the detail modal for a specific stock.
+
+        Args:
+            stock_id (int): ID of the stock to view.
+            tab (str, optional): Initial tab to show ('overview' or 'activity'). Defaults to "overview".
+        """
         self.detail_stock_id = stock_id
-        stock = next((s for s in self.stocks if s.id == stock_id), None)
-        if stock:
-            self.edit_ticker_value = stock.ticker
-            self.active_detail_tab = tab
-            self.is_detail_modal_open = True
+        self.active_detail_tab = tab
+        self.is_detail_modal_open = True
 
     @rx.event
     def close_detail_modal(self):
+        """Closes the detail modal."""
         self.is_detail_modal_open = False
         self.detail_stock_id = -1
 
     @rx.event
     def set_active_detail_tab(self, value: str):
+        """
+        Sets the active tab in the detail modal.
+
+        Args:
+            value (str): The tab identifier.
+        """
         self.active_detail_tab = value
 
     @rx.event
-    def set_edit_ticker_value(self, value: str):
-        self.edit_ticker_value = value
-
-    @rx.event
-    def save_ticker_edit(self):
-        yield KanbanState.update_ticker(self.detail_stock_id, self.edit_ticker_value)
-
-    @rx.event
     def open_ocean_modal(self):
+        """Opens the Ocean archive modal."""
         self.is_ocean_modal_open = True
 
     @rx.event
     def close_ocean_modal(self):
+        """Closes the Ocean archive modal."""
         self.is_ocean_modal_open = False
 
     @rx.event
+    def set_new_stock_ticker(self, value: str):
+        """Sets the ticker for the new stock form."""
+        self.new_stock_ticker = value
+
+    @rx.event
+    def set_new_stock_company(self, value: str):
+        """Sets the company name for the new stock form."""
+        self.new_stock_company = value
+
+    @rx.event
+    def set_new_stock_stage(self, value: str):
+        """Sets the stage for the new stock form."""
+        self.new_stock_stage = value
+
+    @rx.event
+    def set_modal_user(self, value: str):
+        """Sets the user performing the action in the confirmation modal."""
+        self.modal_user = value
+
+    @rx.event
+    def set_modal_comment(self, value: str):
+        """Sets the comment in the confirmation modal."""
+        self.modal_comment = value
+
+    @rx.event
+    def set_force_rationale(self, value: str):
+        """Sets the rationale in the force transition modal."""
+        self.force_rationale = value
+
+    @rx.event
     def submit_new_stock(self):
+        """
+        Creates a new stock entity based on form data.
+        """
         if not self.new_stock_ticker or not self.new_stock_company:
             yield rx.toast.error("Ticker and Company Name are required.")
             return
@@ -325,22 +401,13 @@ class KanbanState(rx.State):
         self.close_add_modal()
 
     @rx.event
-    def view_history(self, stock_id: int):
-        stock = next((s for s in self.stocks if s.id == stock_id), None)
-        if not stock:
-            return
-        self.history_stock_ticker = stock.ticker
-        filtered_logs = [log for log in self.logs if log.stock_id == stock_id]
-        filtered_logs.sort(key=lambda x: x.timestamp or get_utc_now(), reverse=True)
-        self.history_logs = filtered_logs
-        self.is_history_open = True
-
-    @rx.event
-    def close_history(self):
-        self.is_history_open = False
-
-    @rx.event
     def delete_stock(self, stock_id: int):
+        """
+        Deletes a stock from the board.
+
+        Args:
+            stock_id (int): ID of the stock to delete.
+        """
         stock = next((s for s in self.stocks if s.id == stock_id), None)
         if stock:
             self.stocks = [s for s in self.stocks if s.id != stock_id]
@@ -350,34 +417,21 @@ class KanbanState(rx.State):
             yield rx.toast.success(f"Deleted stock {stock.ticker}")
 
     @rx.event
-    def update_ticker(self, stock_id: int, new_ticker: str):
-        """Updates a stock's ticker symbol."""
-        new_ticker = new_ticker.upper().strip()
-        if not new_ticker:
-            return
-        if any((s.ticker == new_ticker and s.id != stock_id for s in self.stocks)):
-            yield rx.toast.error(f"Ticker {new_ticker} already exists.")
-            return
-        stock = next((s for s in self.stocks if s.id == stock_id), None)
-        if stock:
-            old_ticker = stock.ticker
-            stock.ticker = new_ticker
-            for log in self.logs:
-                if log.stock_id == stock_id:
-                    log.ticker = new_ticker
-            yield rx.toast.success(f"Renamed {old_ticker} to {new_ticker}")
-            self.stocks = list(self.stocks)
-
-    @rx.event
     def load_stocks(self):
         """
-        Load all stocks from the database.
+        Load all stocks from the database (simulated).
         """
         self.refresh_stock_ages()
 
     def _calculate_days_in_stage(self, stock: Stock) -> Stock:
         """
         Helper to update the days_in_stage based on current time.
+
+        Args:
+            stock (Stock): The stock to update.
+
+        Returns:
+            Stock: The updated stock object.
         """
         if stock.current_stage_entered_at is None:
             stock.current_stage_entered_at = get_utc_now()
@@ -389,7 +443,6 @@ class KanbanState(rx.State):
     def refresh_stock_ages(self):
         """
         Recalculates days_in_stage for all stocks to ensure staleness is accurate.
-        Acts as a migration for records with missing timestamps.
         """
         self.stocks = [self._calculate_days_in_stage(s) for s in self.stocks]
 
@@ -467,9 +520,15 @@ class KanbanState(rx.State):
         rationale: str = "",
     ):
         """
-        Moves a stock to a new stage transactionally:
-        1. Updates the Stock record.
-        2. Creates a TransitionLog entry.
+        Moves a stock to a new stage transactionally.
+
+        Args:
+            stock_id (int): ID of stock to move.
+            new_stage (str): Destination stage.
+            comment (str): User comment for the logs.
+            user (str): Username performing the action.
+            force_override (bool): Flag if this was a forced move.
+            rationale (str): Reason for forcing if applicable.
         """
         if new_stage not in self.stages:
             self.last_error = f"Invalid stage: {new_stage}"

@@ -3,6 +3,12 @@ from datetime import datetime, timezone
 
 
 def get_utc_now() -> datetime:
+    """
+    Get the current UTC timestamp.
+
+    Returns:
+        datetime: Current UTC datetime object.
+    """
     return datetime.now(timezone.utc)
 
 
@@ -50,7 +56,7 @@ class StageDef(rx.Base):
     border_color: str
 
 
-STAGES_DATA = [
+STAGES_DATA: list[dict[str, str]] = [
     {
         "name": "Universe",
         "color": "text-gray-700",
