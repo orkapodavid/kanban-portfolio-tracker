@@ -27,9 +27,10 @@ class Stock(rx.Base):
     is_forced: bool = False
 
 
-class TransitionLog(rx.Base):
+class StateTransitionLog(rx.Base):
     """
     Logs the history of stock movements between stages.
+    This serves as the immutable audit trail for the application.
     """
 
     id: int = 0

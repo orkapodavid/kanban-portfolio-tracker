@@ -1,3 +1,5 @@
-reflex==0.8.20
-reflex-enterprise
+pytest
 PyGithub
+pytest-asyncio
+reflex
+reflex-enterprise

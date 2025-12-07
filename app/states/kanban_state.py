@@ -4,7 +4,8 @@ from datetime import datetime, timezone, timedelta
 import logging
 import csv
 import io
-from app.models import Stock, TransitionLog, StageDef, STAGES_DATA, get_utc_now
+import os
+from app.models import Stock, StateTransitionLog, StageDef, STAGES_DATA, get_utc_now
 from app.states.base_state import BaseState
 
 
@@ -15,7 +16,7 @@ class KanbanState(BaseState):
     """
 
     stocks: list[Stock] = []
-    logs: list[TransitionLog] = []
+    logs: list[StateTransitionLog] = []
     stage_defs: list[StageDef] = [StageDef(**data) for data in STAGES_DATA]
     last_error: str = ""
     search_query: str = ""
@@ -56,15 +57,34 @@ class KanbanState(BaseState):
         )
 
     @rx.var
-    def current_detail_logs(self) -> list[TransitionLog]:
+    def current_detail_logs(self) -> list[StateTransitionLog]:
         """
         Returns history logs for the detailed stock.
 
         Returns:
-            list[TransitionLog]: List of transition logs sorted by timestamp descending.
+            list[StateTransitionLog]: List of transition logs sorted by timestamp descending.
         """
         logs = [log for log in self.logs if log.stock_id == self.detail_stock_id]
         return sorted(logs, key=lambda x: x.timestamp or get_utc_now(), reverse=True)
+
+    @rx.event
+    def get_time_in_stage(self, stock_id: int) -> str:
+        """
+        Calculates how long a stock has been in its current stage.
+        Used for the 'Audit Trail' display and logic.
+
+        Args:
+            stock_id (int): The ID of the stock.
+
+        Returns:
+            str: Formatted string of days/hours.
+        """
+        stock = next((s for s in self.stocks if s.id == stock_id), None)
+        if not stock or not stock.current_stage_entered_at:
+            return "0 days"
+        delta = get_utc_now() - stock.current_stage_entered_at
+        days = delta.days
+        return f"{days} days"
 
     @rx.var
     def ocean_stocks(self) -> list[Stock]:
@@ -449,7 +469,7 @@ class KanbanState(BaseState):
         self.stocks.append(new_stock)
         new_log_id = self.next_log_id
         self.next_log_id += 1
-        initial_log = TransitionLog(
+        initial_log = StateTransitionLog(
             id=new_log_id,
             stock_id=new_id,
             ticker=new_stock.ticker,
@@ -547,7 +567,7 @@ class KanbanState(BaseState):
                         days_in_stage=days_stale,
                     )
                     self.stocks.append(stock)
-                    log = TransitionLog(
+                    log = StateTransitionLog(
                         id=l_id,
                         stock_id=s_id,
                         ticker=ticker,
@@ -611,7 +631,7 @@ class KanbanState(BaseState):
                 stock.is_forced = force_override
                 l_id = self.next_log_id
                 self.next_log_id += 1
-                log = TransitionLog(
+                log = StateTransitionLog(
                     id=l_id,
                     stock_id=stock.id,
                     ticker=stock.ticker,
@@ -641,6 +661,11 @@ class KanbanState(BaseState):
         """
         Event handler for page load. Initializes DB and loads data.
         """
+        db_url = os.getenv("DATABASE_URL")
+        if db_url:
+            logging.info(
+                "Database URL found, but using in-memory list for this Starter Code."
+            )
         self.initialize_sample_data()
         self.load_stocks()
         self.refresh_stock_ages()

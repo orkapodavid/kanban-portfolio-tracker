@@ -79,11 +79,11 @@ def header() -> rx.Component:
                     rx.icon("plus", class_name="h-4 w-4 mr-2"),
                     "Add New Stock",
                     on_click=KanbanState.open_add_modal,
-                    class_name="flex items-center justify-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors w-full md:w-auto min-h-[44px] md:min-h-[38px]",
+                    class_name="flex items-center justify-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors w-full md:w-auto min-h-[44px] md:min-h-[38px] shadow-sm active:transform active:scale-95",
                 ),
                 class_name=rx.cond(
                     KanbanState.is_mobile_menu_open,
-                    "flex flex-col md:flex-row items-center gap-4 mt-4 md:mt-0 w-full md:w-auto",
+                    "flex flex-col md:flex-row items-center gap-4 mt-4 md:mt-0 w-full md:w-auto pb-4 md:pb-0",
                     "hidden md:flex flex-col md:flex-row items-center gap-4 mt-4 md:mt-0 w-full md:w-auto",
                 ),
             ),
