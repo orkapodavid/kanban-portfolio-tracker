@@ -67,25 +67,6 @@ class KanbanState(BaseState):
         logs = [log for log in self.logs if log.stock_id == self.detail_stock_id]
         return sorted(logs, key=lambda x: x.timestamp or get_utc_now(), reverse=True)
 
-    @rx.event
-    def get_time_in_stage(self, stock_id: int) -> str:
-        """
-        Calculates how long a stock has been in its current stage.
-        Used for the 'Audit Trail' display and logic.
-
-        Args:
-            stock_id (int): The ID of the stock.
-
-        Returns:
-            str: Formatted string of days/hours.
-        """
-        stock = next((s for s in self.stocks if s.id == stock_id), None)
-        if not stock or not stock.current_stage_entered_at:
-            return "0 days"
-        delta = get_utc_now() - stock.current_stage_entered_at
-        days = delta.days
-        return f"{days} days"
-
     @rx.var
     def ocean_stocks(self) -> list[Stock]:
         """
