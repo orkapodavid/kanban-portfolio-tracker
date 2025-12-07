@@ -2,6 +2,8 @@ import reflex as rx
 from typing import Optional
 from datetime import datetime, timezone, timedelta
 import logging
+import csv
+import io
 from app.models import Stock, TransitionLog, StageDef, STAGES_DATA, get_utc_now
 from app.states.base_state import BaseState
 
@@ -103,6 +105,50 @@ class KanbanState(BaseState):
         if self.show_stale_only:
             stocks = [s for s in stocks if s.days_in_stage > 30]
         return stocks
+
+    @rx.event
+    async def export_to_csv(self):
+        """
+        Generates and downloads a CSV export of the current filtered stock list.
+        """
+        try:
+            yield rx.toast.info("Generating CSV export...")
+            output = io.StringIO()
+            writer = csv.writer(output, quoting=csv.QUOTE_MINIMAL)
+            writer.writerow(
+                [
+                    "Stock ID",
+                    "Ticker",
+                    "Company Name",
+                    "Current Stage",
+                    "Days in Stage",
+                    "Last Updated (UTC)",
+                ]
+            )
+            for stock in self.filtered_stocks:
+                last_updated_str = (
+                    stock.last_updated.strftime("%Y-%m-%d %H:%M")
+                    if stock.last_updated
+                    else ""
+                )
+                writer.writerow(
+                    [
+                        stock.id,
+                        stock.ticker,
+                        stock.company_name,
+                        stock.status,
+                        stock.days_in_stage,
+                        last_updated_str,
+                    ]
+                )
+            csv_content = output.getvalue()
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"kanban_export_{timestamp}.csv"
+            yield rx.download(data=csv_content, filename=filename)
+            yield rx.toast.success("Export ready for download.")
+        except Exception as e:
+            logging.exception(f"Export failed: {e}")
+            yield rx.toast.error(f"Export failed: {str(e)}")
 
     @rx.event
     def toggle_stale_filter(self):

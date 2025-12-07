@@ -70,6 +70,12 @@ def header() -> rx.Component:
                     ),
                 ),
                 rx.el.button(
+                    rx.icon("download", class_name="h-4 w-4 mr-2"),
+                    "Export CSV",
+                    on_click=KanbanState.export_to_csv,
+                    class_name="flex items-center justify-center px-4 py-2 bg-white text-gray-700 border border-gray-300 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors w-full md:w-auto min-h-[44px] md:min-h-[38px]",
+                ),
+                rx.el.button(
                     rx.icon("plus", class_name="h-4 w-4 mr-2"),
                     "Add New Stock",
                     on_click=KanbanState.open_add_modal,
