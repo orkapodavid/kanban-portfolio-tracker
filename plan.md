@@ -158,16 +158,16 @@
 
 ---
 
-## Phase 13: UI Verification - Deal Detail Modal and Ocean Archive
-- [ ] Test clicking stock cards opens detail modal correctly
-- [ ] Verify Overview tab displays all stock information accurately (ID, Ticker input, Current Stage, Days in Stage)
-- [ ] Test ticker renaming functionality (change ticker, click Rename button, verify update works)
-- [ ] Verify Activity Log tab displays all transitions for the stock
-- [ ] Test forced transition highlighting (yellow background) in activity log
-- [ ] Verify modal closes properly and doesn't interfere with drag-and-drop
-- [ ] Test Ocean column shows summary card instead of individual cards
-- [ ] Verify Ocean summary card displays correct count
-- [ ] Test Ocean summary card click opens archive modal
-- [ ] Verify archive modal lists all Ocean stocks
-- [ ] Test click-through from archive to detail modal
-- [ ] Test search functionality still works with ticker and company_name filtering
+## Phase 13: UI Verification - Deal Detail Modal and Ocean Archive ✅
+- [x] Test clicking stock cards opens detail modal correctly
+- [x] Verify Overview tab displays all stock information accurately (ID, Ticker input, Current Stage, Days in Stage)
+- [x] Test ticker renaming functionality (change ticker, click Rename button, verify update works)
+- [x] Verify Activity Log tab displays all transitions for the stock
+- [x] Test forced transition highlighting (yellow background) in activity log
+- [x] Verify modal closes properly and doesn't interfere with drag-and-drop
+- [x] Test Ocean column shows summary card instead of individual cards
+- [x] Verify Ocean summary card displays correct count
+- [x] Test Ocean summary card click opens archive modal
+- [x] Verify archive modal lists all Ocean stocks
+- [x] Test click-through from archive to detail modal
+- [x] Test search functionality still works with ticker and company_name filtering
